@@ -1,0 +1,17 @@
+discord.py[voicec]
+discord-webhook==0.14.0
+python-dotenv==0.19.0
+asyncpraw==7.4.0
+asyncio
+asyncpg==0.24.0
+pymongo[srv]
+pafy
+PyNaCl
+psutil
+disputils
+typeshed_client
+beautifulsoup4
+lxml
+dpymenus
+git+git://github.com/rbx-libdev/ro.py.git
+git+https://github.com/Rapptz/discord-ext-menus
