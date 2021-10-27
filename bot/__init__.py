@@ -1,32 +1,34 @@
 from asyncio import sleep
 from datetime import datetime
-from glob import glob
 from os import getenv
+from pathlib import Path
 
 # from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # from apscheduler.triggers.cron import CronTrigger
-from discord import DMChannel, Embed, File
-from discord.errors import Forbidden, HTTPException
+from discord import Activity, ActivityType, DMChannel, Embed, Intents
+from discord.errors import Forbidden
 from discord.ext.commands import BadArgument
 from discord.ext.commands import Bot as BotBase
 from discord.ext.commands import (CommandNotFound, CommandOnCooldown, Context,
                                   MissingRequiredArgument, when_mentioned_or)
-from dotenv import load_dotenvgit
+from dotenv import load_dotenv
 from pymongo import MongoClient
 
 OWNER_IDS = [759385760071155783, 188903265931362304, 801344820757004328, 454886359354703882, 342418762152280076] # 5 Councils
-COGS = [path.split("\\")[-1][:-3] for path in glob("./cogs/*.py")]
+COGS = [p.stem for p in Path(".").glob("./cogs/*.py")]
 IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument)
+
 
 class Ready(object):
     def __init__(self):
         for cog in COGS:
             setattr(self, cog, False)
 
+
     def ready_up(self, cog):
-        
         setattr(self, cog, True)
-        print(f" {cog} cog ready")
+        print(f"{cog.upper()} cog ready")
+
 
     def all_ready(self):
         return all([getattr(self, cog) for cog in COGS])
@@ -36,50 +38,70 @@ class Bot(BotBase):
     def __init__(self):
         self.ready = False
         self.cogs_ready = Ready()
+        self.load_dotenv = load_dotenv()
 
         self.guild = None
         # self.scheduler = AsyncIOScheduler()
 
         self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
-        self.DB = self.MONGO_CLIENT["Daily_DB"]
+        self.DB = self.MONGO_CLIENT["RF911"]
         self.GUILD_DB = self.DB['Guild']
 
-        super().__init__(command_prefix=self.prefix, owner_ids=OWNER_IDS)
+        super().__init__(command_prefix=self.prefix,
+                         case_insensitive=True,
+                         owner_ids=set(OWNER_IDS),
+                         intents=Intents.all()
+                        )
 
 
     def setup(self):
-        load_dotenv()
+        print("---------- Setting up ----------")
         for cog in COGS:
             self.load_extension(f"cogs.{cog}")
-            print(f" {cog} cog loaded")
+            print(f"{cog.upper()} cog loaded")
 
-        print("Setup complete")
+        print("-------- Setup complete --------")
 
 
     def prefix(self, bot, msg):
-        prefix = self.GUILD_DB.find_one({"_id": f'{msg.guild.id}'})
+        prefix = self.GUILD_DB.find_one({"_id": msg.guild.id})
         
         return when_mentioned_or(str(prefix["prefix"]))(bot, msg)
 
 
     def run(self):
-
-        print("Running setup ...")
+        print("------- Running setup ... ------")
         self.setup()
         self.TOKEN = getenv("TOKEN")
-
-        print("Running RF 911 ...")
+        print("------ Running RF 911 ... ------")
         super().run(self.TOKEN, reconnect=True)
+
+    
+    async def on_guild_join(self, guild):
+        self.GUILD_DB.insert_one({
+                "_id": guild.id,
+                "server name": guild.name,
+                "prefix": "rf-",
+                "daily channel": None,
+                "mute_role": None,
+                "log channel": None,
+                "Bounty submission": None,
+            }
+        )
+
+
+    async def on_guild_remove(self, guild):
+        self.GUILD_DB.delete_one({"_id": guild.id})
 
 
     async def process_commands(self, message):
         ctx = await self.get_context(message, cls=Context)
 
         if ctx.command is not None and ctx.guild is not None:
-            if message.author.id in self.banlist:
-                await ctx.send("You are banned from using commands.")
+            # if message.author.id in self.banlist:
+            #     await ctx.send("You are banned from using commands.")
 
-            elif not self.ready:
+            if not self.ready:
                 await ctx.send("I'm not ready to receive commands. Please wait a few seconds.")
 
             else:
@@ -91,18 +113,18 @@ class Bot(BotBase):
 
 
     async def on_connect(self):
-        print("RF 911 connected")
+        print("------- RF 911 Connected -------")
 
 
     async def on_disconnect(self):
-        print("RF 911 disconnected")
+        print("------ RF 911 Disconnected -----")
 
 
     async def on_error(self, err, *args, **kwargs):
         if err == "on_command_error":
             await args[0].send("Something went wrong.")
 
-        await self.stdout.send("An error occured.")
+        # await self.stdout.send("An error occured.")
         raise
 
 
@@ -137,13 +159,19 @@ class Bot(BotBase):
             # self.scheduler.add_job(self.rules_reminder, CronTrigger(day_of_week=0, hour=12, minute=0, second=0))
             # self.scheduler.start()
 
+
             while not self.cogs_ready.all_ready():
                 await sleep(0.5)
 
             # await self.stdout.send("Now online!")
             self.ready = True
-            print("RF 911 ready")
+            print('--------- Logged in as ---------')
+            print(f'Name : {self.user}')
+            print(f'IDs : {self.user.id}')
+            print(f"Ping: {round(self.latency* 1000)} ms")
+            print('--------------------------------')
 
+            await self.change_presence(activity=Activity(type=ActivityType.watching, name="Raid Force 911")) 
             # meta = self.get_cog("Meta")
             # await meta.set()
 
@@ -151,32 +179,32 @@ class Bot(BotBase):
             print("RF 911 reconnected")
 
 
-    async def on_message(self, message):
-        if not message.author.bot:
-            if isinstance(message.channel, DMChannel):
-                if len(message.content) < 50:
-                    await message.channel.send("Your message should be at least 50 characters in length.")
+    # async def on_message(self, message):
+    #     if not message.author.bot:
+    #         if isinstance(message.channel, DMChannel):
+    #             if len(message.content) < 50:
+    #                 await message.channel.send("Your message should be at least 50 characters in length.")
 
-                else:
-                    member = self.guild.get_member(message.author.id)
-                    embed = Embed(title="Modmail",
-                                  colour=member.colour,
-                                  timestamp=datetime.utcnow())
+    #             else:
+    #                 member = self.guild.get_member(message.author.id)
+    #                 embed = Embed(title="Modmail",
+    #                               colour=member.colour,
+    #                               timestamp=datetime.utcnow())
 
-                    embed.set_thumbnail(url=member.avatar_url)
+    #                 embed.set_thumbnail(url=member.avatar_url)
 
-                    fields = [("Member", member.display_name, False),
-                              ("Message", message.content, False)]
+    #                 fields = [("Member", member.display_name, False),
+    #                           ("Message", message.content, False)]
 
-                    for name, value, inline in fields:
-                        embed.add_field(name=name, value=value, inline=inline)
+    #                 for name, value, inline in fields:
+    #                     embed.add_field(name=name, value=value, inline=inline)
                     
-                    mod = self.get_cog("Mod")
-                    await mod.log_channel.send(embed=embed)
-                    await message.channel.send("Message relayed to moderators.")
+    #                 mod = self.get_cog("Mod")
+    #                 await mod.log_channel.send(embed=embed)
+    #                 await message.channel.send("Message relayed to moderators.")
 
-            else:
-                await self.process_commands(message)
+    #         else:
+    #             await self.process_commands(message)
 
 
 bot = Bot()

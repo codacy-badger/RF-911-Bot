@@ -13,5 +13,6 @@ typeshed_client
 beautifulsoup4
 lxml
 dpymenus
+pytz
 git+git://github.com/rbx-libdev/ro.py.git
 git+https://github.com/Rapptz/discord-ext-menus
