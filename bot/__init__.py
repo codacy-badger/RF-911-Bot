@@ -1,5 +1,4 @@
 from asyncio import sleep
-from datetime import datetime
 from os import getenv
 from pathlib import Path
 
@@ -122,7 +121,7 @@ class Bot(BotBase):
 
     async def on_error(self, err, *args, **kwargs):
         if err == "on_command_error":
-            await args[0].send("Something went wrong.")
+            await args[0].send("Something went wrong.", delete_after=15)
 
         # await self.stdout.send("An error occured.")
         raise

@@ -1,19 +1,11 @@
-import asyncio
-import datetime as dt
-import os
-import time
-from datetime import datetime
 from os import getenv
-from re import compile
 from typing import Optional
 
-from aiohttp import ClientSession
-from bs4 import BeautifulSoup
-from discord import Embed, Member, TextChannel
+from discord import Embed, TextChannel
 from discord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
                                   has_permissions, has_role)
+from discord.ext.commands.errors import MissingRole
 from pymongo import MongoClient
-from pytz import timezone
 from requests import get
 from roblox import Client
 
@@ -118,6 +110,12 @@ class Bounty(Cog):
                 await ctx.send(embed=embed)
         else:
             await ctx.send(f"Wrong channel to submit bounty {ctx.author.mention}", delete_after=30)
+
+
+    @_bounty.error
+    async def _load_error(self, ctx, exc):
+        if isinstance(exc, MissingRole):
+            await ctx.send("You don't have \"Bounty Hunter\" role to submit this request, please try again.", delete_after = 15)
 
 
     @Cog.listener()
