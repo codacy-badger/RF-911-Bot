@@ -32,12 +32,10 @@ class Admin(Cog):
     @command(name="prefix", description="Change server prefix, require administrator permissions")
     @has_permissions(administrator=True)
     async def prefix(self, ctx, guild_prefix: Optional[str] = "rf-"):
-
         await del_user_msg(ctx)
 
         # Find guild and set prefix for that guild
         self.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"prefix": guild_prefix}})
-
 
         # Setting Nickname after change prefix
         old_nickname = ctx.guild.me.display_name if '|' not in ctx.guild.me.display_name else ctx.guild.me.display_name.split("|")[1]
@@ -47,11 +45,10 @@ class Admin(Cog):
 
     @command(name="invite", hidden=True)
     async def _invite(self, ctx):
-
         await del_user_msg(ctx)
+
         embed = Embed(title= "RF 911 Official Bot", colour=0x2f3136)
         embed.set_thumbnail(url=self.bot.user.avatar_url)
-
         fields = [
             ("Invite link: ", "[click here](https://discord.com/oauth2/authorize?client_id=902485667232235591&permissions=0413373295990&scope=bot)", False),
             ("RF Warehouse: ", "[click here](https://discord.gg/ZZGM8PD3fW)", False)
@@ -66,7 +63,6 @@ class Admin(Cog):
     @command(name='ping', description='Show Bot Latency')
     @cooldown(5, 10, BucketType.user)
     async def _ping(self, ctx):
-
         await del_user_msg(ctx)
 
         start = time()
@@ -106,10 +102,8 @@ class Admin(Cog):
     @command(name = "stats", description='Show bot stats.')
     async def show_bot_stats(self, ctx):
         await del_user_msg(ctx)
-        embed = Embed(title= "Yandere Stats",
-                        colour=0x2f3136,
-                        timestamp=datetime.utcnow())
 
+        embed = Embed(title= "Yandere Stats", colour=0x2f3136, timestamp=datetime.utcnow())
         proc = Process()
         with proc.oneshot():
             uptime = timedelta(seconds=time()-proc.create_time())
