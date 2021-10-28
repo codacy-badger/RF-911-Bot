@@ -8,6 +8,8 @@ from pymongo import MongoClient
 from roblox import Client
 from dpymenus import Page, PaginatedMenu
 
+from . import del_user_msg
+
 
 class Logistics(Cog):
     def __init__(self, bot):
@@ -48,8 +50,9 @@ class Logistics(Cog):
     @command(name='check-friend', aliases=['cf'], description='Check user\'s friend list. Require ')
     @has_role("Logistics")
     async def _check_friend(self, ctx, userName: Optional[str] = "roblox"):
-        user_name = await self.roblox.get_user_by_username(userName)
+        await del_user_msg(ctx)
 
+        user_name = await self.roblox.get_user_by_username(userName)
         if user_name == None:
             await ctx.send("No user found with that username.")
         else:
