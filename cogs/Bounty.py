@@ -45,10 +45,9 @@ class Bounty(Cog):
 
     @command(name='robloxinfo', aliases=['rbinfo'])
     async def get_robloxinfo(self, ctx, name: Optional[str] = 'Roblox'):
-
-        user_name = await self.roblox.get_user_by_username(name)
         await del_user_msg(ctx)
 
+        user_name = await self.roblox.get_user_by_username(name)
         if user_name == None:
             await ctx.send("No user found with that username.")
         else:
