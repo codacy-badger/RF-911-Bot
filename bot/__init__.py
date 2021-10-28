@@ -4,7 +4,7 @@ from pathlib import Path
 
 # from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # from apscheduler.triggers.cron import CronTrigger
-from discord import Activity, ActivityType, DMChannel, Embed, Intents
+from discord import Activity, ActivityType, DMChannel, Embed, Intents, AuditLogAction
 from discord.errors import Forbidden
 from discord.ext.commands import BadArgument
 from discord.ext.commands import Bot as BotBase
@@ -77,14 +77,20 @@ class Bot(BotBase):
 
     
     async def on_guild_join(self, guild):
+        def check(event):
+            return event.target.id == self.user.id
+
+        bot_entry = await guild.audit_logs(action=AuditLogAction.bot_add).find(check)
+        await bot_entry.user.send(f'Hello {bot_entry.user.mention}, Thanks for inviting me! \nDefault prefix is "rf-"')
+
         self.GUILD_DB.insert_one({
                 "_id": guild.id,
                 "server name": guild.name,
                 "prefix": "rf-",
-                "daily channel": None,
-                "mute_role": None,
-                "log channel": None,
                 "Bounty submission": None,
+                "Daily channel": None,
+                "Log channel": None,
+                "Mute role": None,
             }
         )
 
