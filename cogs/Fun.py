@@ -11,6 +11,7 @@ from discord.utils import find, get
 from pymongo import MongoClient
 
 from . import del_user_msg
+from ..startup import VERSION
 
 
 DND_EMOJI = "<:dnd:903269917854400532>"
@@ -104,17 +105,20 @@ class Fun(Cog):
         await ctx.send(embed=embed, delete_after = self.DELETE_AFTER)
 
     
-    @command(name='credit')
-    async def _credit(self, ctx):
+    @command(name='info')
+    async def info_command(self, ctx):
         await del_user_msg(ctx)
 
         owner = self.bot.get_user(CREATOR_ID)
         created_at = self.bot.user.created_at.strftime("%d/%m/%Y")
         
-        embed = Embed(color=0x2f3136, title='RF 911 Official Bot')
+        embed = Embed(color=0x2f3136, title='')
+        embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.avatar_url)
         fields = [
-            (f'Created by {owner}', f"ID: {owner.id}", False),
-            (f'Created at: ', created_at, False)
+            ('Created by ', owner, True),
+            ('Created at ', created_at, True),
+            ('Version ', VERSION, True),
+            ('RF 911 Website ', "[Link](https://website.raid-force-911.repl.co/)", True)
         ]
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=inline)
