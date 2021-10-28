@@ -8,7 +8,9 @@ from discord.ext.commands.errors import MissingRole
 from pymongo import MongoClient
 from requests import get
 from roblox import Client
+
 from . import del_user_msg
+
 
 class Bounty(Cog):
     def __init__(self, bot):
@@ -112,7 +114,6 @@ class Bounty(Cog):
     async def _load_error(self, ctx, exc):
         if isinstance(exc, MissingRole):
             await ctx.send(content=exc, delete_after = 20)
-
 
 
     @Cog.listener()
