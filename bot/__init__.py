@@ -16,7 +16,6 @@ from pymongo import MongoClient
 OWNER_IDS = [759385760071155783, 188903265931362304, 801344820757004328, 454886359354703882, 342418762152280076] # 5 Councils
 COGS = [p.stem for p in Path(".").glob("./cogs/*.py")]
 IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument)
-VERSION = 0.4
 
 
 class Ready(object):
@@ -69,7 +68,9 @@ class Bot(BotBase):
         return when_mentioned_or(str(prefix["prefix"]))(bot, msg)
 
 
-    def run(self):
+    def run(self, version):
+        self.VERSION = version
+
         print("------- Running setup ... ------")
         self.setup()
         self.TOKEN = getenv("TOKEN")
@@ -174,7 +175,8 @@ class Bot(BotBase):
             print('--------- Logged in as ---------')
             print(f'Name : {self.user}')
             print(f'IDs : {self.user.id}')
-            print(f"Ping: {round(self.latency* 1000)} ms")
+            print(f'Version: {self.VERSION}')
+            print(f'Ping: {round(self.latency* 1000)} ms')
             print('--------------------------------')
 
             await self.change_presence(activity=Activity(type=ActivityType.watching, name="Raid Force 911")) 
