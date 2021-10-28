@@ -52,7 +52,7 @@ class Daily(Cog):
 
 
     async def get_channel_role(self):
-        self.channel_role = [channel_role['daily channel'] for channel_role in self.GUILD_DB.find()]
+        self.channel_role = [channel_role['Daily channel'] for channel_role in self.GUILD_DB.find()]
 
 
     async def check_db(self):
