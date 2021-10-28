@@ -8,7 +8,7 @@ from discord.ext.commands.errors import MissingRole
 from pymongo import MongoClient
 from requests import get
 from roblox import Client
-
+from . import del_user_msg
 
 class Bounty(Cog):
     def __init__(self, bot):
@@ -23,23 +23,19 @@ class Bounty(Cog):
     async def check_channel(self, ctx):
         BOUNTY_SUBMISSIONS = self.GUILD_DB.find_one({"_id": ctx.guild.id})['Bounty submission']
 
-        if ctx.channel.id != BOUNTY_SUBMISSIONS:
+        if ctx.channel.id != BOUNTY_SUBMISSIONS and BOUNTY_SUBMISSIONS is not None:
             return False
         return True
 
 
-    async def del_user_msg(self, ctx):
-        msg = await ctx.channel.fetch_message(ctx.message.id)
-        await msg.delete()
-
-
     @command(name="set-bounty-channel", aliases=["sbc"], description="Set Bounty Submissions Channel")
     @has_permissions(administrator=True)
-    async def _set_daily(self, ctx, channels : Greedy[TextChannel]):
+    async def _set_daily(self, ctx, channels : Greedy[TextChannel] = None):
+        await del_user_msg(ctx)
 
         channel_id = (channel.id for channel in channels).__next__()
         
-        await self.del_user_msg(ctx)
+        await del_user_msg(ctx)
         self.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Bounty submission": channel_id}})
 
         await ctx.send(f'Bounty Submissions channel set/update to <#{channel_id}>', delete_after = 30)
@@ -49,7 +45,7 @@ class Bounty(Cog):
     async def get_robloxinfo(self, ctx, name: Optional[str] = 'Roblox'):
 
         user_name = await self.roblox.get_user_by_username(name)
-        await self.del_user_msg(ctx)
+        await del_user_msg(ctx)
 
         if user_name == None:
             await ctx.send("No user found with that username.")
@@ -80,9 +76,9 @@ class Bounty(Cog):
     @command(name="submit-bounty", aliases=['sb'])
     @cooldown(rate=4, per=7200, type=BucketType.user)
     @has_role("Bounty Hunter")
-    async def _bounty(self, ctx, target: Optional[str], *, reason: Optional[str] = "No reason provided."):
+    async def _bounty(self, ctx, target: Optional[str] = "Roblox",  *, reason: Optional[str] = "No reason provided."):
         CHECK_CHANNEL = await self.check_channel(ctx)
-        await self.del_user_msg(ctx)
+        await del_user_msg(ctx)
 
         if CHECK_CHANNEL:
             user_name = await self.roblox.get_user_by_username(target)
@@ -106,7 +102,7 @@ class Bounty(Cog):
 
                 for name, value, inline in fields:
                     embed.add_field(name=name, value=value, inline=inline)
-                
+
                 await ctx.send(embed=embed)
         else:
             await ctx.send(f"Wrong channel to submit bounty {ctx.author.mention}", delete_after=30)
@@ -115,7 +111,8 @@ class Bounty(Cog):
     @_bounty.error
     async def _load_error(self, ctx, exc):
         if isinstance(exc, MissingRole):
-            await ctx.send("You don't have \"Bounty Hunter\" role to submit this request, please try again.", delete_after = 15)
+            await ctx.send(content=exc, delete_after = 20)
+
 
 
     @Cog.listener()

@@ -10,6 +10,7 @@ from discord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
 from discord.ext.tasks import loop
 from pymongo import MongoClient
 from pytz import timezone
+from . import del_user_msg
 
 
 class Daily(Cog):
@@ -152,19 +153,13 @@ class Daily(Cog):
         return today, embed, mission_objective
 
 
-    @staticmethod
-    async def del_user_msg(ctx):
-        user_msg = await ctx.channel.fetch_message(ctx.message.id)
-        await user_msg.delete()
-
-
     @command(name="set-daily-channel", aliases=["sdc"], description="Set Auto Daily Challenges Channel")
     @has_permissions(administrator=True)
     async def _set_daily(self, ctx, channels : Greedy[TextChannel]):
 
         channel_id = (channel.id for channel in channels).__next__()
         
-        await self.del_user_msg(ctx)
+        await del_user_msg(ctx)
         self.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"daily channel": channel_id}})
 
         await ctx.send(f'Daily channel set to <#{channel_id}>', delete_after = 30)
@@ -173,7 +168,7 @@ class Daily(Cog):
     @command(name="daily", description="Show Entry Point Daily Challenges")
     @cooldown(3, 30, BucketType.user)
     async def _daily_command(self, ctx):
-        await self.del_user_msg(ctx)
+        await del_user_msg(ctx)
 
         msg = await ctx.send("Loading... <a:discord:873909804630933575>")
 

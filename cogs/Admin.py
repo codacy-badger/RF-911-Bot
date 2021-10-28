@@ -8,17 +8,16 @@ from re import search
 from time import strftime, time
 from typing import Optional
 
-import discord
 from aiohttp import request
 from discord import Embed, Member
 from discord import __version__ as discord_version
 from discord.ext import commands
 from discord.ext.commands import (BadArgument, BucketType, Cog, Greedy,
                                   bot_has_permissions, command, cooldown,
-                                  has_permissions, is_owner)
-from discord_webhook import DiscordEmbed, DiscordWebhook
+                                  has_permissions)
 from psutil import Process, virtual_memory
 from pymongo import MongoClient
+from . import del_user_msg
 
 
 class Admin(Cog):
@@ -30,17 +29,11 @@ class Admin(Cog):
         self.GUILD_DB = self.DB['Guild']
 
 
-    @staticmethod
-    async def del_user_msg(ctx):
-        user_msg = await ctx.channel.fetch_message(ctx.message.id)
-        await user_msg.delete()
-
-
     @command(name="prefix", description="Change server prefix, require administrator permissions")
     @has_permissions(administrator=True)
     async def prefix(self, ctx, guild_prefix: Optional[str] = "rf-"):
 
-        await self.del_user_msg(ctx)
+        await del_user_msg(ctx)
 
         # Find guild and set prefix for that guild
         self.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"prefix": guild_prefix}})
@@ -55,8 +48,9 @@ class Admin(Cog):
     @command(name="invite", hidden=True)
     async def _invite(self, ctx):
 
-        await self.del_user_msg(ctx)
-        embed = Embed(title= "", colour=0x2f3136)
+        await del_user_msg(ctx)
+        embed = Embed(title= "RF 911 Official Bot", colour=0x2f3136)
+        embed.set_thumbnail(url=self.bot.user.avatar_url)
 
         fields = [
             ("Invite link: ", "[click here](https://discord.com/oauth2/authorize?client_id=902485667232235591&permissions=0413373295990&scope=bot)", False),
@@ -73,7 +67,7 @@ class Admin(Cog):
     @cooldown(5, 10, BucketType.user)
     async def _ping(self, ctx):
 
-        await self.del_user_msg(ctx)
+        await del_user_msg(ctx)
 
         start = time()
         embed = Embed(title= "Pong!", colour=0x2f3136, timestamp=datetime.utcnow())
@@ -111,6 +105,7 @@ class Admin(Cog):
 
     @command(name = "stats", description='Show bot stats.')
     async def show_bot_stats(self, ctx):
+        await del_user_msg(ctx)
         embed = Embed(title= "Yandere Stats",
                         colour=0x2f3136,
                         timestamp=datetime.utcnow())
@@ -141,6 +136,7 @@ class Admin(Cog):
     @has_permissions(administrator=True)
     @cooldown(1, 10, BucketType.user)
     async def _spam(self, ctx, amount: int, *, text):
+        await del_user_msg(ctx)
 
         for _ in itertools.repeat(None, amount):
             await ctx.send(f'{text}', delete_after= 120)

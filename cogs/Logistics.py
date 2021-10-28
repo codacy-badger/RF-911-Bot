@@ -1,23 +1,12 @@
-import asyncio
-import datetime as dt
-import os
-import time
-from datetime import datetime
 from os import getenv
-from re import compile
 from typing import Optional
 
 from aiohttp import ClientSession
-from bs4 import BeautifulSoup
-from discord import Embed, Member, TextChannel
-from discord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
-                                  has_permissions, has_role)
+from discord.ext.commands import (Cog, command, has_role)
+from discord.ext.commands.errors import MissingRole
 from pymongo import MongoClient
-from requests import get
-from concurrent.futures import ThreadPoolExecutor
 from roblox import Client
 from dpymenus import Page, PaginatedMenu
-
 
 
 class Logistics(Cog):
@@ -41,55 +30,52 @@ class Logistics(Cog):
                 url = await response.json()
                 data = url["data"]
 
-                friend_ids = [data[i]["id"] for i in range(len(data))]
+                friend_ids = [[data[i]["name"], data[i]["displayName"], data[i]["id"], str(data[i]["isOnline"])] for i in range(len(data))]
 
         return friend_ids
 
 
-    def auto_page(self, friend):
-        url = get(
-            f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={friend.id}").json()
+    def auto_page(self, friend, target, page_index):
+        page = Page(title=f"{target.name}'s friends list", colour= 0x2f3136)
+        page.set_footer(text=page_index)
 
-        page = Page(title=f"Friends list", colour= 0x2f3136, url=f"https://www.roblox.com/users/{friend.id}/profile")
-        page.set_thumbnail(url=url["data"][0]["imageUrl"])
-
-        description = "This user has no description." if friend.description == '' else friend.description.strip()
-
-        fields = [("User Name: ", friend.name, True),
-                    ("Display Name: ", friend.display_name, True),
-                    ("ID: ", friend.id, False),
-                    ("Created at: ", str(friend.created)[:10], True),
-                    ("Is banned: ", friend.is_banned, True),
-                    ("Description: ", description, False)
-        ]
-
-        for name, value, inline in fields:
-            page.add_field(name=name, value=value, inline=inline)
+        for name, displayname, friendID, is_online in friend:
+            page.add_field(name=f"Name: {name}", value=f"Display name: {displayname}\nIDs: {friendID}\nOnline: {is_online}\n[Link](https://www.roblox.com/users/{friendID}/profile)\n-----------------------------", inline=False)
 
         self.PAGE_LIST.append(page)
 
 
     @command(name='check-friend', aliases=['cf'], description='Check user\'s friend list. Require ')
-    # @has_role("Logistics")
+    @has_role("Logistics")
     async def _check_friend(self, ctx, userName: Optional[str] = "roblox"):
         user_name = await self.roblox.get_user_by_username(userName)
-        # await self.del_user_msg(ctx)
 
         if user_name == None:
             await ctx.send("No user found with that username.")
         else:
             friend_ids = await self.get_url(user_name.id)
-            user = [await self.roblox.get_user(friend) for friend in friend_ids]
+            if len(friend_ids):
+                self.PAGE_LIST = []
+                index, page, per_page = 0, 1, 6
+                while index < len(friend_ids):
+                    page_index = f" {page} - {(len(friend_ids)//per_page + 1) if len(friend_ids)%per_page else len(friend_ids)//per_page} in {len(friend_ids)} friends."
+                    self.auto_page(friend_ids[index:index + per_page ], user_name, page_index)
+                    index += 6; page += 1
 
-            with ThreadPoolExecutor() as executor:
-                executor.map(self.auto_page, user)
+                menu = (PaginatedMenu(ctx)
+                            .set_timeout(60)
+                            .add_pages(self.PAGE_LIST)
+                            .show_skip_buttons()
+                       )
+                await menu.open()
+            else:
+                await ctx.send("This user has no friends")
 
-            menu = (PaginatedMenu(ctx)
-                .set_timeout(60)
-                .add_pages(self.PAGE_LIST)
-                .show_skip_buttons()
-                )
-            await menu.open()
+
+    @_check_friend.error
+    async def _load_error(self, ctx, exc):
+        if isinstance(exc, MissingRole):
+            await ctx.send(content=exc, delete_after = 20)
 
 
     @Cog.listener()
