@@ -24,7 +24,7 @@ CREATOR_ID = 188903265931362304
 class Fun(Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.DELETE_AFTER = 120
+        self.DELETE_AFTER = 180
 
         self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
         self.DB = self.MONGO_CLIENT["RF911"]
@@ -88,6 +88,20 @@ class Fun(Cog):
             embed.add_field(name=name, value=value, inline=inline)
 
         await ctx.send(embed=embed, delete_after= self.DELETE_AFTER)
+
+    
+    @command(name="av")
+    async def av_command(self, ctx, targets: Greedy[Member] = None):
+        await del_user_msg(ctx)
+
+        target_id = (target.id for target in targets).__next__() if targets is not None else ctx.author.id
+        user = self.bot.get_user(target_id)
+
+        embed = Embed(title='Avatar',color=0x2f3136)
+        embed.set_author(name=f"{user}", icon_url=user.avatar_url)
+        embed.set_image(url=user.avatar_url)
+        
+        await ctx.send(embed=embed, delete_after = self.DELETE_AFTER)
 
     
     @command(name='credit')
