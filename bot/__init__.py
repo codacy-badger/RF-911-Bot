@@ -16,6 +16,7 @@ from pymongo import MongoClient
 OWNER_IDS = [759385760071155783, 188903265931362304, 801344820757004328, 454886359354703882, 342418762152280076] # 5 Councils
 COGS = [p.stem for p in Path(".").glob("./cogs/*.py")]
 IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument)
+VERSION = 0.4
 
 
 class Ready(object):
