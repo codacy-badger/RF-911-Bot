@@ -108,6 +108,7 @@ class Mod(Cog):
 
 
     @command(name="set-lockdown-channel", aliases=["slc"])
+    @has_permissions(administrator=True)
     async def add_lockdown_command(self, ctx, *, channel):
 
         lockdown_channel_ids = [int(channel_id.replace("<#", '').replace(">", '')) for channel_id in channel.split(',')]
@@ -117,6 +118,7 @@ class Mod(Cog):
 
 
     @command(name="lockdown")
+    @has_permissions(administrator=True)
     async def lockdown_command(self, ctx, option: Optional[str] = "start"):
         lockdown_channel = self.GUILD_DB.find_one({"_id": ctx.guild.id})["Lockdown channel"]
 
@@ -133,12 +135,11 @@ class Mod(Cog):
             await ctx.send("Locked down all selected channels")
 
 
-
     async def warn_members(self, ctx, targets, reason):
         for target in targets:
             warn_id = str(uuid4())
             time = date.today().strftime("%b %d %Y")
-            self.WARN_DB.insert_one({"_id": warn_id, "user": target.id,"Moderator": ctx.author.id, "reason": f"{reason} {time}"})
+            self.WARN_DB.insert_one({"_id": warn_id, "Guild ID": ctx.guild.id ,"user": target.id, "Moderator": ctx.author.id, "reason": f"{reason} {time}"})
 
             embed = Embed(title=f" Warned | {target.name}#{target.discriminator}", colour=0xff470f, timestamp=datetime.utcnow())
             embed.set_footer(text=f"User IDs: {target.id}")
@@ -171,11 +172,11 @@ class Mod(Cog):
         if not len(warnings_id):
             await ctx.send("One or more required arguments are missing.")
         else:
-            warnings = self.WARN_DB.find_one({"_id": warnings_id})
+            warnings = self.WARN_DB.find_one({"_id": warnings_id, "Guild ID": ctx.guild.id})
             user = self.bot.get_user(warnings["user"])
 
             if len(list(warnings)):
-                self.WARN_DB.delete_one({"_id": str(warnings_id)})
+                self.WARN_DB.delete_one({"_id": str(warnings_id), "Guild ID": ctx.guild.id})
                 embed = Embed(title='',  color=0x43b582, description=f"Deleted warning `{warnings_id}` for {user}.", delete_after=self.DELETE_AFTER)
                 await ctx.send(embed=embed)
             else:
@@ -192,7 +193,7 @@ class Mod(Cog):
         if not len(targets):
             await ctx.send("One or more required arguments are missing.")
         else:
-            warnings =  [[intel["_id"], intel['Moderator'], intel["reason"]] for intel in self.WARN_DB.find({"user": targetID})]
+            warnings =  [[intel["_id"], intel['Moderator'], intel["reason"]] for intel in self.WARN_DB.find({"user": targetID, "Guild ID": ctx.guild.id})]
             total_warns = len(warnings)
             user = self.bot.get_user(targetID)
             if total_warns:
@@ -210,7 +211,7 @@ class Mod(Cog):
 
     async def kick_members(self, ctx, targets, reason):
         for target in targets:
-            pass_required = await self.check_role(ctx, target)
+            pass_required = self.check_role(ctx, target)
             if pass_required:
 
                 await target.kick(reason=reason)
@@ -243,9 +244,31 @@ class Mod(Cog):
             await self.kick_members(ctx, targets, reason)
 
     
+    @command(name='banned',InvokeWithoutCommand=True)
+    @bot_has_permissions(manage_roles=True, ban_members=True)
+    @has_permissions(manage_roles=True, manage_guild=True)
+    async def _banned(self, ctx):
+        '''Show banned user, require ban member permissions'''
+
+        banned_users = await ctx.guild.bans()
+
+        author = ctx.message.author
+        embed = Embed(name="", color=0xDD2222)
+        embed.set_author(name="Banned users:")
+
+        if banned_users != []:
+            for ban_entry in banned_users:
+                user = ban_entry.user
+                embed.add_field(name=f"User: ", value=f"{user}\n ID : {user.id}", inline=False)
+        else:
+            embed.add_field(name=f"No one have been banned.",value=f"|| ||", inline=False)
+
+        await ctx.channel.send(embed=embed)
+
+
     async def ban_members(self, ctx, targets, reason):
         for target in targets:
-            pass_required = await self.check_role(ctx, target)
+            pass_required = self.check_role(ctx, target)
             if pass_required:
 
                 await target.ban(reason=reason)
