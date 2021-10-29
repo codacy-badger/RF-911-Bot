@@ -36,8 +36,6 @@ class Bounty(Cog):
         await del_user_msg(ctx)
 
         channel_id = (channel.id for channel in channels).__next__()
-        
-        await del_user_msg(ctx)
         self.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Bounty submission": channel_id}})
 
         await ctx.send(f'Bounty Submissions channel set/update to <#{channel_id}>', delete_after = 30)
