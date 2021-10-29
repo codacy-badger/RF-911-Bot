@@ -50,7 +50,7 @@ class Admin(Cog):
         embed = Embed(title= "RF 911 Official Bot", colour=0x2f3136)
         embed.set_thumbnail(url=self.bot.user.avatar_url)
         fields = [
-            ("Invite link: ", "[click here](https://discord.com/oauth2/authorize?client_id=902485667232235591&permissions=0413373295990&scope=bot)", False),
+            ("Invite link: ", "[click here](https://discord.com/api/oauth2/authorize?client_id=902485667232235591&permissions=534689345271&scope=bot)", False),
             ("RF Warehouse: ", "[click here](https://discord.gg/ZZGM8PD3fW)", False)
         ]
 
@@ -99,7 +99,7 @@ class Admin(Cog):
             await ctx.send("The limit provided is not within acceptable bounds.")
 
 
-    @command(name = "stats", description='Show bot stats.')
+    @command(name="stats", description='Show bot stats.')
     async def show_bot_stats(self, ctx):
         await del_user_msg(ctx)
 
