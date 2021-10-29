@@ -11,7 +11,6 @@ from discord.utils import find, get
 from pymongo import MongoClient
 
 from . import del_user_msg
-from ..startup import VERSION
 
 
 DND_EMOJI = "<:dnd:903269917854400532>"
@@ -117,7 +116,6 @@ class Fun(Cog):
         fields = [
             ('Created by ', owner, True),
             ('Created at ', created_at, True),
-            ('Version ', VERSION, True),
             ('RF 911 Website ', "[Link](https://website.raid-force-911.repl.co/)", True)
         ]
         for name, value, inline in fields:
