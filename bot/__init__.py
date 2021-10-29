@@ -4,16 +4,18 @@ from pathlib import Path
 
 # from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # from apscheduler.triggers.cron import CronTrigger
-from discord import Activity, ActivityType, DMChannel, Embed, Intents, AuditLogAction
+from discord import (Activity, ActivityType, AuditLogAction, DMChannel, Embed,
+                     Intents)
 from discord.errors import Forbidden
 from discord.ext.commands import BadArgument
 from discord.ext.commands import Bot as BotBase
 from discord.ext.commands import (CommandNotFound, CommandOnCooldown, Context,
                                   MissingRequiredArgument, when_mentioned_or)
+from discord.ext.commands.errors import MissingPermissions
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
-OWNER_IDS = [759385760071155783, 188903265931362304, 801344820757004328, 454886359354703882, 342418762152280076] # 5 Councils
+OWNER_IDS = [188903265931362304] # 5 Councils
 COGS = [p.stem for p in Path(".").glob("./cogs/*.py")]
 IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument)
 
@@ -45,6 +47,9 @@ class Bot(BotBase):
         self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
         self.DB = self.MONGO_CLIENT["RF911"]
         self.GUILD_DB = self.DB['Guild']
+        self.MUTE_DB = self.DB["Mute"]
+        self.CASE_DB = self.DB["Case"]
+        self.WARN_DB = self.DB["Warns"]
 
         super().__init__(command_prefix=self.prefix,
                          case_insensitive=True,
@@ -77,13 +82,13 @@ class Bot(BotBase):
         print("------ Running RF 911 ... ------")
         super().run(self.TOKEN, reconnect=True)
 
-    
+
     async def on_guild_join(self, guild):
         def check(event):
             return event.target.id == self.user.id
 
         bot_entry = await guild.audit_logs(action=AuditLogAction.bot_add).find(check)
-        await bot_entry.user.send(f'Hello {bot_entry.user.mention}, Thanks for inviting me! \nDefault prefix is "rf-"')
+        await bot_entry.user.send(f'Hello {bot_entry.user.mention}, Thanks for inviting me! \nDefault prefix is "rf-" \nPlease use following commands to complete the setup: set-default-role, set-bounty-channel, set-lockdown-channel, set-log-channel, set-mute-role')
 
         self.GUILD_DB.insert_one({
                 "_id": guild.id,
@@ -93,12 +98,16 @@ class Bot(BotBase):
                 "Daily channel": None,
                 "Log channel": None,
                 "Mute role": None,
+                "Default role": None,
             }
         )
 
 
     async def on_guild_remove(self, guild):
         self.GUILD_DB.delete_one({"_id": guild.id})
+        self.WARN_DB.delete_many({"Guild ID": guild.id})
+        self.CASE_DB.delete_many({"Guild ID": guild.id})
+        # self.MUTE_DB.delete_many({"Guild ID": guild.id}) # Need to add Guild ID in MUTE_DB for mute
 
 
     async def process_commands(self, message):
@@ -145,6 +154,9 @@ class Bot(BotBase):
         elif isinstance(exc, CommandOnCooldown):
             await ctx.send(f"That command is on {str(exc.cooldown.type).split('.')[-1]} cooldown. Try again in {exc.retry_after:,.2f} secs.")
 
+        elif isinstance(exc, MissingPermissions):
+            await ctx.send(exc)
+
         elif hasattr(exc, "original"):
             # if isinstance(exc.original, HTTPException):
             # 	await ctx.send("Unable to send message.")
@@ -187,32 +199,12 @@ class Bot(BotBase):
             print("RF 911 reconnected")
 
 
-    # async def on_message(self, message):
-    #     if not message.author.bot:
-    #         if isinstance(message.channel, DMChannel):
-    #             if len(message.content) < 50:
-    #                 await message.channel.send("Your message should be at least 50 characters in length.")
-
-    #             else:
-    #                 member = self.guild.get_member(message.author.id)
-    #                 embed = Embed(title="Modmail",
-    #                               colour=member.colour,
-    #                               timestamp=datetime.utcnow())
-
-    #                 embed.set_thumbnail(url=member.avatar_url)
-
-    #                 fields = [("Member", member.display_name, False),
-    #                           ("Message", message.content, False)]
-
-    #                 for name, value, inline in fields:
-    #                     embed.add_field(name=name, value=value, inline=inline)
-                    
-    #                 mod = self.get_cog("Mod")
-    #                 await mod.log_channel.send(embed=embed)
-    #                 await message.channel.send("Message relayed to moderators.")
-
-    #         else:
-    #             await self.process_commands(message)
+    async def on_message(self, message):
+        if not message.author.bot:
+            if isinstance(message.channel, DMChannel):
+                pass
+            else:
+                await self.process_commands(message)
 
 
 bot = Bot()
