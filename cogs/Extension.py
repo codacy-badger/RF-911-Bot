@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 from discord import Embed
-from discord.ext.commands import Cog, CommandError, command, has_permissions
+from discord.ext.commands import Cog, CommandError, command, has_permissions, is_owner
 from . import del_user_msg
 
 class ExtensionNotloaded(CommandError):
@@ -20,8 +20,8 @@ class Extension(Cog):
         self.DELETE_AFTER = 45
 
 
-    @command(name= "load", description='Load extensions, required administrator permission')
-    @has_permissions(administrator=True)
+    @command(name="load", description='Load extensions, required administrator permission', hidden=True)
+    @is_owner()
     async def _load(self, ctx, module: Optional[str]):
         await del_user_msg(ctx)
 
@@ -32,8 +32,8 @@ class Extension(Cog):
             raise ExtensionNotloaded
 
 
-    @command(name= 'unload', description='Unload extensions, required administrator permission')
-    @has_permissions(administrator=True)
+    @command(name='unload', description='Unload extensions, required administrator permission', hidden=True)
+    @is_owner()
     async def _unload(self, ctx, module: Optional[str]):
         await del_user_msg(ctx)
 
@@ -44,8 +44,8 @@ class Extension(Cog):
             raise ExtensionNotloaded
 
 
-    @command(name= 'reload', description='Reload extensions, required administrator permission')
-    @has_permissions(administrator=True)
+    @command(name='reload', description='Reload extensions, required administrator permission', hidden=True)
+    @is_owner()
     async def _reload(self, ctx, module: Optional[str] = "all"):
         await del_user_msg(ctx)
 
@@ -62,8 +62,8 @@ class Extension(Cog):
             raise ExtensionNotloaded
 
 
-    @command(name = 'cogs', description = 'List all extensions')
-    @has_permissions(administrator=True)
+    @command(name='cogs', description = 'List all extensions', hidden=True)
+    @is_owner()
     async def _list_all_extensions(self, ctx):
         await del_user_msg(ctx)
 
