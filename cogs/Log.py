@@ -1,8 +1,8 @@
 from datetime import datetime
 from os import getenv
 
-from discord import Embed
-from discord.ext.commands import Cog
+from nextcord import Embed
+from nextcord.ext.commands import Cog
 from pymongo import MongoClient
 
 
@@ -28,7 +28,7 @@ class Log(Cog):
     async def on_member_update(self, before, after):
         if before.roles != after.roles:
             embed = Embed(title="", colour=0x337fd5, timestamp=datetime.utcnow())
-            embed.set_author(name=after, icon_url=after.avatar_url)
+            embed.set_author(name=after, icon_url=after.display_avatar)
             embed.set_footer(text=f"Author: {after}, ID: {after.id}")
 
             fields = [("Before ", ", ".join([r.mention for r in before.roles]), False),
@@ -46,7 +46,7 @@ class Log(Cog):
             if before.content != after.content:
                 embed = Embed(title='', colour=0x337fd5, timestamp=datetime.utcnow(), description=f"**Message edited in** {after.channel.mention} [Jump to message]({after.jump_url})")
                 embed.set_footer(text=f"User ID: {after.author.id}")
-                embed.set_author(name=after.author, icon_url=after.author.avatar_url)
+                embed.set_author(name=after.author, icon_url=after.author.display_avatar)
 
                 fields = [("Before", before.content, False),
                           ("After", after.content, False)]
@@ -62,9 +62,17 @@ class Log(Cog):
         if not message.author.bot:
             embed = Embed(title='', description=f"**Message sent by {message.author.mention} deleted in {message.channel.mention}** \n{message.content}", colour=0xff470f, timestamp=datetime.utcnow())
             embed.set_footer(text=f"User ID: {message.author.id} | Message ID: {message.id}")
-            embed.set_author(name=message.author, icon_url=message.author.avatar_url)
+            embed.set_author(name=message.author, icon_url=message.author.display_avatar)
 
             await self.log_send(message.guild, embed)
+
+    
+    @Cog.listener()
+    async def on_command_completion(self, ctx):
+        embed = Embed(title="", colour=0x2f3136, description=f"Used `{ctx.command}` command in {ctx.channel.mention} \n{ctx.message.content}", timestamp=datetime.utcnow())
+        embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+
+        await self.log_send(ctx.guild, embed)
 
 
     @Cog.listener()
