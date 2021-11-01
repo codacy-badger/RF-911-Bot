@@ -1,10 +1,10 @@
 from os import getenv
 from typing import Optional
 
-from discord import Embed, TextChannel
-from discord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
+from nextcord import Embed, TextChannel, Member
+from nextcord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
                                   has_permissions, has_role)
-from discord.ext.commands.errors import MissingRole
+from nextcord.ext.commands.errors import MissingRole
 from pymongo import MongoClient
 from requests import get
 from roblox import Client
@@ -20,6 +20,7 @@ class Bounty(Cog):
         self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
         self.DB = self.MONGO_CLIENT["RF911"]
         self.GUILD_DB = self.DB['Guild']
+        self.ROBLOX_DB = self.DB['Roblox']
         
 
     async def check_channel(self, ctx):
@@ -39,6 +40,41 @@ class Bounty(Cog):
         self.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Bounty submission": channel_id}})
 
         await ctx.send(f'Bounty Submissions channel set/update to <#{channel_id}>', delete_after = 30)
+
+    
+    @command(name="roblox-info")
+    async def roblox_info_command(self, ctx, users: Optional[Member]):
+        await del_user_msg(ctx)
+
+        target = users or ctx.author
+
+        if self.ROBLOX_DB.find_one({"_id": target.id}) is None:
+            await ctx.send("Can't find roblox account linked with this user")
+        else:
+            user = self.ROBLOX_DB.find_one({"_id": target.id})
+            userID = user["Roblox ID"]
+            roblox = await self.roblox.get_user(userID)
+
+            url = get(
+                f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={roblox.id}").json()
+
+            embed = Embed(title="Roblox User Info", colour= 0x2f3136, url=f"https://www.roblox.com/users/{roblox.id}/profile")
+            embed.set_thumbnail(url=url["data"][0]["imageUrl"])
+
+            description = "This user has no description." if roblox.description == '' else roblox.description.strip()
+
+            fields = [("User Name: ", roblox.name, True),
+                    ("Display Name: ", roblox.display_name, True),
+                    ("ID: ", roblox.id, False),
+                    ("Created at: ", str(roblox.created)[:10], True),
+                    ("Is banned: ", roblox.is_banned, True),
+                    ("Description: ", description, False)
+            ]
+
+            for name, value, inline in fields:
+                embed.add_field(name=name, value=value, inline=inline)
+
+            await ctx.send(embed=embed)
 
 
     @command(name='robloxinfo', aliases=['rbinfo'])
@@ -90,7 +126,7 @@ class Bounty(Cog):
                     f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user_name.id}").json()
 
                 embed = Embed(title="***TARGET INFO***", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
-                embed.set_author(name=f"Resquested by {ctx.author}", icon_url=f'{ctx.author.avatar_url}')
+                embed.set_author(name=f"Resquested by {ctx.author}", icon_url=f'{ctx.author.display_avatar}')
                 embed.set_image(url=url["data"][0]["imageUrl"])
 
                 fields = [("User Name: ", user.name, True),
