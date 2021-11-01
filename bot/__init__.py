@@ -4,14 +4,14 @@ from pathlib import Path
 
 # from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # from apscheduler.triggers.cron import CronTrigger
-from discord import (Activity, ActivityType, AuditLogAction, DMChannel, Embed,
+from nextcord import (Activity, ActivityType, AuditLogAction, DMChannel, Embed,
                      Intents)
-from discord.errors import Forbidden
-from discord.ext.commands import BadArgument
-from discord.ext.commands import Bot as BotBase
-from discord.ext.commands import (CommandNotFound, CommandOnCooldown, Context,
+from nextcord.errors import Forbidden
+from nextcord.ext.commands import BadArgument
+from nextcord.ext.commands import Bot as BotBase
+from nextcord.ext.commands import (CommandNotFound, CommandOnCooldown, Context,
                                   MissingRequiredArgument, when_mentioned_or)
-from discord.ext.commands.errors import MissingPermissions
+from nextcord.ext.commands.errors import MissingPermissions
 from dotenv import load_dotenv
 from pymongo import MongoClient
 
@@ -50,12 +50,12 @@ class Bot(BotBase):
         self.MUTE_DB = self.DB["Mute"]
         self.CASE_DB = self.DB["Case"]
         self.WARN_DB = self.DB["Warns"]
+        self.BANNED_USER_DB = self.DB["Banned User"]
 
         super().__init__(command_prefix=self.prefix,
                          case_insensitive=True,
                          owner_ids=set(OWNER_IDS),
-                         intents=Intents.all()
-                        )
+                         intents=Intents.all())
 
 
     def setup(self):
@@ -107,25 +107,25 @@ class Bot(BotBase):
         self.GUILD_DB.delete_one({"_id": guild.id})
         self.WARN_DB.delete_many({"Guild ID": guild.id})
         self.CASE_DB.delete_many({"Guild ID": guild.id})
-        # self.MUTE_DB.delete_many({"Guild ID": guild.id}) # Need to add Guild ID in MUTE_DB for mute
+        self.MUTE_DB.delete_many({"Guild ID": guild.id})
 
 
     async def process_commands(self, message):
         ctx = await self.get_context(message, cls=Context)
+        self.banlist_user = [user["_id"] for user in self.BANNED_USER_DB.find({"Guild ID": message.guild.id, "Type": 'user'})]
+        self.banlist_channel = [channel["_id"] for channel in self.BANNED_USER_DB.find({"Guild ID": message.guild.id, "Type": 'channel'})]
 
         if ctx.command is not None and ctx.guild is not None:
-            # if message.author.id in self.banlist:
-            #     await ctx.send("You are banned from using commands.")
+            if message.author.id in self.banlist_user:
+                await ctx.reply("You are banned from using commands.", delete_after=2)
+            elif message.channel.id in self.banlist_channel:
+                await ctx.reply("Commands are disabled in this channel.", delete_after=2)
 
-            if not self.ready:
-                await ctx.send("I'm not ready to receive commands. Please wait a few seconds.")
+            elif not self.ready:
+                await ctx.send("I'm not ready to receive commands. Please wait a few seconds.", delete_after=5)
 
             else:
                 await self.invoke(ctx)
-
-
-    # async def rules_reminder(self):
-    #     await self.stdout.send("Remember to adhere to the rules!")
 
 
     async def on_connect(self):
@@ -138,9 +138,8 @@ class Bot(BotBase):
 
     async def on_error(self, err, *args, **kwargs):
         if err == "on_command_error":
-            await args[0].send("Something went wrong.", delete_after=15)
+            await args[0].send(f"Something went wrong. \n{err}", delete_after=15)
 
-        # await self.stdout.send("An error occured.")
         raise
 
 
@@ -158,9 +157,6 @@ class Bot(BotBase):
             await ctx.send(exc)
 
         elif hasattr(exc, "original"):
-            # if isinstance(exc.original, HTTPException):
-            # 	await ctx.send("Unable to send message.")
-
             if isinstance(exc.original, Forbidden):
                 await ctx.send("I do not have permission to do that.")
 
@@ -173,16 +169,9 @@ class Bot(BotBase):
 
     async def on_ready(self):
         if not self.ready:
-            # self.guild = self.get_guild(806551631754690611)
-            # self.stdout = self.get_channel(803112623951970314)
-            # self.scheduler.add_job(self.rules_reminder, CronTrigger(day_of_week=0, hour=12, minute=0, second=0))
-            # self.scheduler.start()
-
-
             while not self.cogs_ready.all_ready():
                 await sleep(0.5)
 
-            # await self.stdout.send("Now online!")
             self.ready = True
             print('--------- Logged in as ---------')
             print(f'Name : {self.user}')
