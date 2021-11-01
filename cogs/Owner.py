@@ -1,23 +1,35 @@
 from pathlib import Path
 from typing import Optional
 
-from discord import Embed
-from discord.ext.commands import Cog, CommandError, command, has_permissions, is_owner
+from nextcord import Embed
+from nextcord.ext.commands import Cog, CommandError, command, has_permissions, is_owner, DisabledCommand
 from . import del_user_msg
+
 
 class ExtensionNotloaded(CommandError):
     pass
 
 
-class ExtensionNotFound(CommandError):
-    pass
-
-
-class Extension(Cog):
+class Owner(Cog):
     def __init__(self, bot):
         self.bot = bot
         self._COGS = [p.stem for p in Path(".").glob("./cogs/*.py")]
         self.DELETE_AFTER = 45
+
+    
+    @command(name="toggle", description="Toggle on/off commands")
+    @is_owner()
+    async def _toggle(self, ctx, command):
+
+        command = self.bot.get_command(command)
+        if command is None:
+            await ctx.send("Invalid command", delete_after= self.DELETE_AFTER)
+        elif ctx.command == command:
+            await ctx.send("Unable to disable this command", delete_after= self.DELETE_AFTER)
+        else:
+            command.enabled = not command.enabled
+            ternary = "enabled" if command.enabled else "disabled"
+            await ctx.send(f'Command {command.qualified_name} has been {ternary}', delete_after= self.DELETE_AFTER)
 
 
     @command(name="load", description='Load extensions, required administrator permission', hidden=True)
@@ -39,7 +51,7 @@ class Extension(Cog):
 
         try:
             self.bot.unload_extension(f'cogs.{module.capitalize()}')
-            await ctx.send(f'UnLoaded `{module.upper()}`', delete_after = self.DELETE_AFTER)
+            await ctx.send(f'Unloaded `{module.upper()}`', delete_after = self.DELETE_AFTER)
         except:
             raise ExtensionNotloaded
 
@@ -70,31 +82,20 @@ class Extension(Cog):
         embed = Embed(title="List of extensions: ", colour= 0x2f3136, description="\n".join(self._COGS))
         await ctx.send(embed=embed, delete_after = self.DELETE_AFTER)
 
-
-    # Loading extensions errors
-    @_load.error
-    async def _load_error(self, ctx, exc):
-        if isinstance(exc, ExtensionNotloaded):
-            await ctx.send("Unable to load this extension", delete_after = self.DELETE_AFTER)
-
-
-    @_unload.error
-    async def _unload_error(self, ctx, exc):
+    
+    @Cog.listener()
+    async def on_command_error(self, ctx, exc):
         if isinstance(exc, ExtensionNotloaded):
             await ctx.send("Unable to unload this extension", delete_after = self.DELETE_AFTER)
-
-
-    @_reload.error
-    async def _reload_error(self, ctx, exc):
-        if isinstance(exc, ExtensionNotloaded):
-            await ctx.send("Unable to reload this extension", delete_after = self.DELETE_AFTER)
+        elif isinstance(exc, DisabledCommand):
+            await ctx.send("This command have been disabled", delete_after = self.DELETE_AFTER)
 
 
     @Cog.listener()
     async def on_ready(self):
         if not self.bot.ready:
-            self.bot.cogs_ready.ready_up("Extension")
+            self.bot.cogs_ready.ready_up("Owner")
 
 
 def setup(bot):
-    bot.add_cog(Extension(bot))
+    bot.add_cog(Owner(bot))
