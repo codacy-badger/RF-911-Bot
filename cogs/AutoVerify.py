@@ -2,13 +2,14 @@ import random
 import string
 from os import getenv
 
-from discord import DMChannel, Embed, Role
-from discord.ext.commands import Cog, command
-from discord.ext.commands.core import check
+from nextcord import DMChannel, Embed, Member, Role
+from nextcord.ext.commands import Cog, Greedy, command, is_owner, has_permissions
+from nextcord.ext.commands.core import check
 from pymongo import MongoClient
 from requests import get
-from discord.ext.commands import Greedy
 from roblox import Client
+from asyncio import sleep
+
 from . import del_user_msg
 
 
@@ -24,6 +25,33 @@ class AutoVerify(Cog):
 
         self.DELETE_AFTER = 300
 
+    
+    @command(name="display-roblox-name", description="Change all members name in server into their roblox name, if they already sign in")
+    @has_permissions(administrator=True)
+    async def display_roblox_name_command(self, ctx, targets :Greedy[Member] = None):
+        if targets is None:
+            for member in ctx.guild.members:
+                if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
+                    pass
+                else:
+                    user = self.ROBLOX_DB.find_one({"_id": member.id})
+                    userID = user["Roblox ID"]
+                    roblox = await self.roblox.get_user(userID)
+
+                    old_nickname = member.display_name if '|' not in member.display_name else member.display_name.split("|")[1]
+                    await member.edit(nick=f"{old_nickname.strip()} | [{roblox.name}]")
+
+
+    @command(name="sign-in")
+    async def sign_in_command(self, ctx):
+        default_role = self.get_default_role(ctx.guild)
+
+        if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
+            await ctx.author.send(f'Hello {ctx.author.mention}, welcome to {ctx.guild.name}. \nPlease tell me your roblox account name', delete_after=self.DELETE_AFTER)
+            await self.check_username(ctx.author, default_role)
+
+        else:
+            await ctx.author.send("You're already verified")
 
     @command(name="set-default-role")
     async def set_default_role_command(self, ctx, roles: Greedy[Role]):
@@ -46,12 +74,12 @@ class AutoVerify(Cog):
             else:
                 check_user_db = self.ROBLOX_DB.find_one({"Roblox ID": user.id})
                 if check_user_db is None:
-                    # url = get(
-                    #     f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user.id}").json()
+                    url = get(
+                        f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user.id}").json()
 
                     user = await self.roblox.get_user(user.id)
                     embed = Embed(title="This is your roblox profile?", colour= 0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
-                    # embed.set_thumbnail(url=url["data"][0]["imageUrl"])
+                    embed.set_thumbnail(url=url["data"][0]["imageUrl"])
 
                     description = "This user has no description." if user.description == '' else str(user.description).strip()
 
@@ -72,17 +100,22 @@ class AutoVerify(Cog):
                     confirm_msg = await self.bot.wait_for('message', check=lambda message: message.author == member)
 
                     if confirm_msg.content.lower() in ["yes", "y"]:
-                        # await member.send(f"Please set this to your description to confirm: \n{random_string_to_confirm}")
-
-                        # while user_description == random_string_to_confirm:
-                        #     user_description = await self.roblox.get_user(user.id).description
+                        await member.send(f"Please set this to your description to confirm: \n{random_string_to_confirm}")
+                        user_description, timeout = None, 0
+                        while user_description != random_string_to_confirm or timeout < 600:
+                            rbuser = await self.roblox.get_user(user.id)
+                            user_description = rbuser.description
+                            timeout += 1
+                            sleep(0.5)
                             
                         await member.send("Congratulation, you have been verified.")
                         guild = self.bot.get_guild(member.guild.id)
                         role = guild.get_role(default_role)
-                        await guild.get_member(member.id).edit(roles=[role], nick=user.name)
+                        old_nickname = member.display_name if '|' not in member.display_name else member.display_name.split("|")[1]
+                        await guild.get_member(member.id).edit(roles=[role], nick=f"{old_nickname.strip()} | [{user.name}]")
                         
-                        self.ROBLOX_DB.insert_one({"_id": member.id, "Roblox ID": user.id, "Joined at": member.joined_at.strftime("%b %d %Y")})
+                        self.ROBLOX_DB.insert_one({"_id": member.id, "User Name": f"{member.name}#{member.discriminator}", "Roblox ID": user.id, "Joined at": member.joined_at.strftime("%b %d %Y")})
+                        break
 
                     elif confirm_msg.content.lower() in ["no", 'n']:
                         await member.send("Please tell me your roblox account name again", delete_after=self.DELETE_AFTER)
@@ -98,7 +131,6 @@ class AutoVerify(Cog):
 
     @Cog.listener()
     async def on_member_join(self, member):
-
         default_role = self.get_default_role(member.guild)
 
         if self.ROBLOX_DB.find_one({"_id": member.id}) is None:
