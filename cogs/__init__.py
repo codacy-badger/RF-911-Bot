@@ -1,4 +1,4 @@
-from discord.ext.commands import Cog
+from nextcord.ext.commands import Cog
 
 
 async def del_user_msg(ctx):

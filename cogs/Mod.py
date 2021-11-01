@@ -3,14 +3,14 @@ from datetime import datetime, timedelta, date
 from os import getenv
 from typing import Optional
 from uuid import uuid4
-import warnings
 
-from discord import Embed, Member, NotFound, Object, Role, TextChannel
-from discord.ext.commands import (BadArgument, CheckFailure, Cog, Converter,
+from nextcord import Embed, Member, NotFound, Object, Role, TextChannel
+from nextcord.ext.commands import (BadArgument, CheckFailure, Cog, Converter,
                                   Greedy, bot_has_permissions, command,
                                   has_permissions)
-from discord.utils import find, get
+from nextcord.utils import find, get
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 
 from . import del_user_msg
 
@@ -43,6 +43,7 @@ class Mod(Cog):
         self.MUTE_DB = self.DB["Mute"]
         self.CASE_DB = self.DB["Case"]
         self.WARN_DB = self.DB["Warns"]
+        self.BANNED_USER_DB = self.DB["Banned User"]
 
 
     async def log_send(self, ctx, embed):
@@ -198,7 +199,7 @@ class Mod(Cog):
             user = self.bot.get_user(targetID)
             if total_warns:
                 embed = Embed(title = '', colour=0xe86b6b)
-                embed.set_author(name = f"{total_warns} warning(s) for {user.name}#{user.discriminator} ({targetID})" ,icon_url=user.avatar_url)
+                embed.set_author(name = f"{total_warns} warning(s) for {user.name}#{user.discriminator} ({targetID})" ,icon_url=user.display_avatar)
                 for warnID, moderator, reason in warnings:
                     moderator = self.bot.get_user(moderator)
                     embed.add_field(name=f"ID: {warnID} | Moderator: {moderator.name}#{moderator.discriminator}", value=reason, inline=False)
@@ -340,7 +341,7 @@ class Mod(Cog):
                     end_time = datetime.utcnow() + timedelta(seconds=tempmute) if tempmute else None # Calculate end time
                     attr = getattr(end_time, "isoformat", lambda: None)() # Get end time
 
-                    self.MUTE_DB.insert_one({"_id": target.id, "role_ids": role_ids,"end time": attr})
+                    self.MUTE_DB.insert_one({"_id": target.id, "role_ids": role_ids,"end time": attr, "Guild ID": ctx.guild.id})
                     await target.edit(roles=[mute_role])
 
                     if hours is not None:
@@ -407,7 +408,7 @@ class Mod(Cog):
                 role_ids = before_mute_roles["role_ids"]
                 roles = [guild.get_role(int(role_id)) for role_id in role_ids.split(",") if len(role_ids)]
 
-                self.MUTE_DB.delete_one({"_id": target.id})
+                self.MUTE_DB.delete_one({"_id": target.id, "Guild ID": ctx.guild.id})
 
                 await target.edit(roles=roles)
 
@@ -426,7 +427,7 @@ class Mod(Cog):
 
             else:
                 await ctx.channel.send("Sorry but this user haven't been muted")
-
+    
 
     @command(name="unmute")
     @bot_has_permissions(manage_roles=True)

@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 from os import getenv
 from typing import Optional
 
-from discord import Embed, Member, NotFound, Object, Role, TextChannel
-from discord.ext.commands import (BadArgument, CheckFailure, Cog, Converter,
+from nextcord import Embed, Member, NotFound, Object, Role, TextChannel
+from nextcord.ext.commands import (BadArgument, CheckFailure, Cog, Converter,
                                   Greedy, bot_has_permissions, command,
                                   has_permissions)
-from discord.utils import find, get
+from nextcord.utils import find, get
 from pymongo import MongoClient
 from . import del_user_msg
 

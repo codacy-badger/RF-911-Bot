@@ -4,10 +4,10 @@ from re import compile
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
-from discord import Embed, TextChannel
-from discord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
+from nextcord import Embed, TextChannel
+from nextcord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
                                   has_permissions)
-from discord.ext.tasks import loop
+from nextcord.ext.tasks import loop
 from pymongo import MongoClient
 from pytz import timezone
 from . import del_user_msg
