@@ -1,5 +1,5 @@
-discord.py[voicec]
-discord-webhook==0.14.0
+nextcord-ext-menus
+nextcord[speed, voice]
 python-dotenv==0.19.0
 asyncpraw==7.4.0
 asyncio
@@ -8,11 +8,12 @@ pymongo[srv]
 pafy
 PyNaCl
 psutil
-disputils
+aiodns 
+Brotli
+cchardet
+orjson
 typeshed_client
 beautifulsoup4
 lxml
-dpymenus
 pytz
 git+git://github.com/rbx-libdev/ro.py.git
-git+https://github.com/Rapptz/discord-ext-menus
