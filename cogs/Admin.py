@@ -1,22 +1,13 @@
 import itertools
-import time
 from datetime import datetime, timedelta
 from os import getenv
-from platform import python_version
-from random import choice, randint
-from re import search
-from time import strftime, time
 from typing import Optional
 
-from aiohttp import request
-from discord import Embed, Member
-from discord import __version__ as discord_version
-from discord.ext import commands
-from discord.ext.commands import (BadArgument, BucketType, Cog, Greedy,
-                                  bot_has_permissions, command, cooldown,
-                                  has_permissions)
-from psutil import Process, virtual_memory
+from nextcord import Embed, Member
+from nextcord.ext.commands import (BucketType, Cog, Greedy, bot_has_permissions,
+                                  command, cooldown, has_permissions)
 from pymongo import MongoClient
+
 from . import del_user_msg
 
 
@@ -43,39 +34,6 @@ class Admin(Cog):
         await ctx.guild.me.edit(nick=f"[{guild_prefix}] | {old_nickname.strip()}")
 
 
-    @command(name="invite", hidden=True)
-    async def _invite(self, ctx):
-        await del_user_msg(ctx)
-
-        embed = Embed(title= "RF 911 Official Bot", colour=0x2f3136)
-        embed.set_thumbnail(url=self.bot.user.avatar_url)
-        fields = [
-            ("Invite link: ", "[click here](https://discord.com/api/oauth2/authorize?client_id=902485667232235591&permissions=534689345271&scope=bot)", False),
-            ("RF Warehouse: ", "[click here](https://discord.gg/ZZGM8PD3fW)", False)
-        ]
-
-        for name, value, inline in fields:
-            embed.add_field(name=name, value=value, inline=inline)
-        
-        await ctx.send(embed=embed)
-
-
-    @command(name='ping', description='Show Bot Latency')
-    @cooldown(5, 10, BucketType.user)
-    async def _ping(self, ctx):
-        await del_user_msg(ctx)
-
-        start = time()
-        embed = Embed(title= "Pong!", colour=0x2f3136, timestamp=datetime.utcnow())
-        embed.set_thumbnail(url=self.bot.user.avatar_url)
-        embed.add_field(name="DWSP Latency: ", value=f'{self.bot.latency*1000:,.0f} ms', inline=False)
-        msg = await ctx.send(embed=embed)
-        end = time()
-
-        embed.add_field(name="Response time:", value = f"{(end-start)*1000:,.0f} ms.", inline=False)
-        await msg.edit(embed=embed, delete_after= 30)
-
-
     @command(name="clear", aliases=["purge"], description="Purge message, require manage messages permissions")
     @bot_has_permissions(manage_messages=True)
     @has_permissions(manage_messages=True)
@@ -97,33 +55,6 @@ class Admin(Cog):
 
         else:
             await ctx.send("The limit provided is not within acceptable bounds.")
-
-
-    @command(name="stats", description='Show bot stats.')
-    async def show_bot_stats(self, ctx):
-        await del_user_msg(ctx)
-
-        embed = Embed(title= "Yandere Stats", colour=0x2f3136, timestamp=datetime.utcnow())
-        proc = Process()
-        with proc.oneshot():
-            uptime = timedelta(seconds=time()-proc.create_time())
-            cpu_time = timedelta(seconds=(cpu := proc.cpu_times()).system + cpu.user)
-            mem_total = virtual_memory().total / (1024**2)
-            mem_of_total = proc.memory_percent()
-            mem_usage = mem_total * (mem_of_total / 100)
-
-        fields = [
-			("Python version", python_version(), True),
-			("discord.py version", discord_version, True),
-			("Uptime", uptime, True),
-			("CPU time", cpu_time, True),
-			("Memory usage", f"{mem_usage:,.3f} / {mem_total:,.0f} MiB ({mem_of_total:.0f}%)", True)
-		]
-
-        for name, value, inline in fields:
-            embed.add_field(name=name, value=value, inline=inline)
-
-        await ctx.send(embed=embed)
 
 
     @command(name='spam', description="Spam text, require administrator permissions")
