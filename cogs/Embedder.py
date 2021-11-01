@@ -1,5 +1,6 @@
-from discord import Embed, TextChannel
-from discord.ext.commands import BucketType, Cog, Greedy, command, cooldown
+from nextcord import Embed, TextChannel, Colour
+from nextcord.ext.commands import BucketType, Cog, Greedy, command, cooldown
+from datetime import datetime
 
 from . import del_user_msg
 
@@ -15,17 +16,34 @@ class Embedder(Cog):
 
         channel_id = (channel.id for channel in channels).__next__()
         channel = self.bot.get_channel(channel_id)
-        
+
         await ctx.send("Title for your embed: ")
         title = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author and message.channel.id == ctx.channel.id)
+
         await ctx.send("Desciption for your embed: ")
         description = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author and message.channel.id == ctx.channel.id)
 
-        embedder = Embed(title=title.content if title.content.lower() != 'none' else Embed.Empty, colour=0x2f3136, description=description.content  if description.content.lower() != 'none' else Embed.Empty)
-        embedder.set_author(name=ctx.author, icon_url=ctx.author.avatar_url)
-
         await ctx.send("Footer text for your embed: ")
         footer = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author and message.channel.id == ctx.channel.id)
+
+        await ctx.send("Color for your embed: ")
+        color = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author and message.channel.id == ctx.channel.id)
+
+        if color.content.lower() == "none":
+            r, g, b = 47, 49, 54
+        else:
+            r, g, b = int(color.content[0:2], 16), int(color.content[2:4], 16), int(color.content[4:6], 16)
+        
+
+        await ctx.send("Times text for your embed? y/n")
+        times = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author and message.channel.id == ctx.channel.id)
+
+        if times.content.lower() in ["y", 'yes']:
+            embedder = Embed(title=title.content if title.content.lower() != 'none' else Embed.Empty, colour=Colour.from_rgb(r, g, b), description=description.content  if description.content.lower() != 'none' else Embed.Empty, timestamp=datetime.utcnow())
+        else:
+            embedder = Embed(title=title.content if title.content.lower() != 'none' else Embed.Empty, colour=Colour.from_rgb(r, g, b), description=description.content  if description.content.lower() != 'none' else Embed.Empty)
+        
+        embedder.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embedder.set_footer(text=footer.content  if footer.content.lower() != 'none' else Embed.Empty)
 
         await ctx.send("Thumbnails text for your embed: ")
