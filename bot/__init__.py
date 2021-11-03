@@ -5,8 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 # from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # from apscheduler.triggers.cron import CronTrigger
-from nextcord import (Activity, ActivityType, AuditLogAction, DMChannel, Embed,
-                      Intents)
+from nextcord import Activity, ActivityType, AuditLogAction, Intents
 from nextcord.errors import Forbidden
 from nextcord.ext.commands import BadArgument
 from nextcord.ext.commands import Bot as BotBase
@@ -186,14 +185,6 @@ class Bot(BotBase):
 
         else:
             print("------ RF 911 Reconnected ------")
-
-
-    async def on_message(self, message):
-        if not message.author.bot:
-            if isinstance(message.channel, DMChannel):
-                pass
-            else:
-                await self.process_commands(message)
 
 
 bot = Bot()
