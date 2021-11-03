@@ -327,7 +327,7 @@ class Mod(Cog):
                 await self.log_send(ctx, embed)
 
 
-    async def mute_members(self, ctx, targets, hours, reason):
+    async def mute_members(self, ctx, targets, hours, reason, auto=False):
         unmutes = []
         mute_role = await self.get_mute_role(ctx) # Get mute role
         tempmute = self.time_converter(hours) # Get duration
@@ -335,7 +335,7 @@ class Mod(Cog):
         for target in targets:
             if not mute_role in target.roles: # If user havent been muted 
                 pass_required = self.check_role(ctx, target)
-                if pass_required:
+                if pass_required or auto:
                     
                     role_ids = ",".join([str(r.id) for r in target.roles]) # Get all user's roles
                     end_time = datetime.utcnow() + timedelta(seconds=tempmute) if tempmute else None # Calculate end time
@@ -353,14 +353,14 @@ class Mod(Cog):
                     embed.set_footer(text=f"User IDs: {target.id}")
 
                     fields = [("Member: ", target.mention, True),
-                              ("Moderator: ", ctx.author.mention, True),
+                              ("Moderator: ", ctx.author.mention if not auto else ctx.guild.me.mention, True),
                               ("Duration: ",f"{duration}", True),
                               ("Reason: ", reason, True),]
 
                     for name, value, inline in fields:
                         embed.add_field(name=name, value=value, inline=inline)
 
-                    await ctx.send(embed=embed, delete_after = self.DELETE_AFTER)
+                    await ctx.channel.send(embed=embed, delete_after = self.DELETE_AFTER)
                     await self.log_send(ctx, embed)
                     
                 else:
@@ -398,7 +398,7 @@ class Mod(Cog):
             await ctx.send("Insufficient permissions to perform that task.")
 
 
-    async def unmute_members(self, ctx, guild, targets, *, reason="Mute time expired."):
+    async def unmute_members(self, ctx, guild, targets, *, reason="Mute time expired.", auto = False):
         
         mute_role = await self.get_mute_role(ctx)
         for target in targets:
@@ -416,7 +416,7 @@ class Mod(Cog):
                 embed.set_footer(text=f"User IDs: {target.id}")
 
                 fields = [("Member: ", target.mention, True),
-                          ("Moderator: ", ctx.author.mention, True),
+                          ("Moderator: ", ctx.author.mention if not auto else ctx.guild.me.mention, True),
                           ("Reason: ", reason, True),]
 
                 for name, value, inline in fields:
