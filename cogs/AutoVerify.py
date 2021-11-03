@@ -102,11 +102,11 @@ class AutoVerify(Cog):
                     if confirm_msg.content.lower() in ["yes", "y"]:
                         await member.send(f"Please set this to your description to confirm: \n{random_string_to_confirm}")
                         user_description, timeout = None, 0
-                        while user_description != random_string_to_confirm or timeout < 600:
+                        while user_description != random_string_to_confirm and timeout < 600:
                             rbuser = await self.roblox.get_user(user.id)
                             user_description = rbuser.description
                             timeout += 1
-                            sleep(0.5)
+                            await sleep(0.5)
                             
                         await member.send("Congratulation, you have been verified.")
                         guild = self.bot.get_guild(member.guild.id)
