@@ -191,7 +191,7 @@ class Bot(BotBase):
         if isinstance(message.channel, DMChannel):
                 pass
         else:
-            await self.bot.process_commands(message)
+            await self.process_commands(message)
 
 
 bot = Bot()
