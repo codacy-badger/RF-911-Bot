@@ -33,7 +33,7 @@ class HelpMenu(ListPageSource):
         # embed.set_thumbnail(url=url["data"][0]["imageUrl"]) 
 
 
-        for name, value in fields:
+        for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=False)
 
         return embed
