@@ -2,20 +2,20 @@ from asyncio import sleep
 from os import getenv
 from pathlib import Path
 
+from dotenv import load_dotenv
 # from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # from apscheduler.triggers.cron import CronTrigger
 from nextcord import (Activity, ActivityType, AuditLogAction, DMChannel, Embed,
-                     Intents)
+                      Intents)
 from nextcord.errors import Forbidden
 from nextcord.ext.commands import BadArgument
 from nextcord.ext.commands import Bot as BotBase
 from nextcord.ext.commands import (CommandNotFound, CommandOnCooldown, Context,
-                                  MissingRequiredArgument, when_mentioned_or)
+                                   MissingRequiredArgument, when_mentioned_or)
 from nextcord.ext.commands.errors import MissingPermissions
-from dotenv import load_dotenv
 from pymongo import MongoClient
 
-OWNER_IDS = [188903265931362304] # 5 Councils
+OWNER_IDS = [188903265931362304]
 COGS = [p.stem for p in Path(".").glob("./cogs/*.py")]
 IGNORE_EXCEPTIONS = (CommandNotFound, BadArgument)
 
@@ -148,17 +148,17 @@ class Bot(BotBase):
             pass
 
         elif isinstance(exc, MissingRequiredArgument):
-            await ctx.send("One or more required arguments are missing.")
+            await ctx.send("One or more required arguments are missing.", delete_after=5)
 
         elif isinstance(exc, CommandOnCooldown):
-            await ctx.send(f"That command is on {str(exc.cooldown.type).split('.')[-1]} cooldown. Try again in {exc.retry_after:,.2f} secs.")
+            await ctx.send(f"That command is on {str(exc.cooldown.type).split('.')[-1]} cooldown. Try again in {exc.retry_after:,.2f} secs.", delete_after=5)
 
         elif isinstance(exc, MissingPermissions):
             await ctx.send(exc)
 
         elif hasattr(exc, "original"):
             if isinstance(exc.original, Forbidden):
-                await ctx.send("I do not have permission to do that.")
+                await ctx.send("I do not have permission to do that.", delete_after=5)
 
             else:
                 raise exc.original
@@ -174,8 +174,8 @@ class Bot(BotBase):
 
             self.ready = True
             print('--------- Logged in as ---------')
-            print(f'Name : {self.user}')
-            print(f'IDs : {self.user.id}')
+            print(f'Name: {self.user}')
+            print(f'ID: {self.user.id}')
             print(f'Version: {self.VERSION}')
             print(f'Ping: {round(self.latency* 1000)} ms')
             print('--------------------------------')
@@ -185,7 +185,7 @@ class Bot(BotBase):
             # await meta.set()
 
         else:
-            print("RF 911 reconnected")
+            print("------ RF 911 Reconnected ------")
 
 
     async def on_message(self, message):
