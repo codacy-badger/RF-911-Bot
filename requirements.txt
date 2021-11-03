@@ -16,4 +16,5 @@ typeshed_client
 beautifulsoup4
 lxml
 pytz
+better_profanity
 git+git://github.com/rbx-libdev/ro.py.git
