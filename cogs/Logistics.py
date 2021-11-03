@@ -7,7 +7,7 @@ from nextcord.ext.commands import Cog, command, has_role
 from nextcord.ext.commands.errors import MissingRole
 from pymongo import MongoClient
 from roblox import Client
-from nextcord.ext.menus import ListPageSource, MenuPages
+from nextcord.ext.menus import ListPageSource, ButtonMenuPages
 from requests import get
 
 from . import del_user_msg
@@ -28,7 +28,7 @@ class HelpMenu(ListPageSource):
         # url = get(
         #         f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={self.userName.id}").json()
 
-        embed = Embed(title=f"{self.userName}'s friends list", colour=0x2f3136)
+        embed = Embed(title=f"{self.userName.name}'s friends list", colour=0x2f3136)
         embed.set_footer(text=f"{offset:,} - {min(len_data, offset+self.per_page-1):,} of {len_data:,} commands.")
         # embed.set_thumbnail(url=url["data"][0]["imageUrl"]) 
 
@@ -80,7 +80,7 @@ class Logistics(Cog):
         else:
             friend_ids = await self.get_url(username.id)
             if len(friend_ids):
-                menu = MenuPages(source=HelpMenu(ctx, friend_ids, username),
+                menu = ButtonMenuPages(source=HelpMenu(ctx, friend_ids, username),
                              clear_reactions_after=True,
                              timeout=60.0)
                 await menu.start(ctx)
