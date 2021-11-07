@@ -70,8 +70,6 @@ class AutoVerify(Cog):
 
 
     async def check_username(self, member, default_role):
-        # random_string_to_confirm = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)).strip()
-
         while True:
             msg = await self.bot.wait_for('message', check=lambda message: message.author == member)
             user = await self.roblox.get_user_by_username(msg.content)
@@ -111,7 +109,7 @@ class AutoVerify(Cog):
                         guild = self.bot.get_guild(member.guild.id)
                         role = guild.get_role(default_role)
                         old_nickname = member.display_name if '|' not in member.display_name else member.display_name.split("|")[1]
-                        
+
                         await guild.get_member(member.id).edit(roles=[role], nick=f"{old_nickname.strip()} | [{user.name}]")
                         
                         self.ROBLOX_DB.insert_one({"_id": member.id, "User Name": f"{member.name}#{member.discriminator}", "Roblox ID": user.id, "Joined at": member.joined_at.strftime("%b %d %Y")})
