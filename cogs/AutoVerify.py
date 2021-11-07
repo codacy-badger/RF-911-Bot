@@ -25,7 +25,12 @@ class AutoVerify(Cog):
 
         self.DELETE_AFTER = 300
 
-    
+
+    async def get_default_role(self, guild):
+        server = self.GUILD_DB.find_one({"_id": guild.id})
+        return server["Default role"]
+
+
     @command(name="display-roblox-name", description="Change all members name in server into their roblox name, if they already sign in")
     @has_permissions(administrator=True)
     async def display_roblox_name_command(self, ctx, targets :Greedy[Member] = None):
@@ -42,18 +47,19 @@ class AutoVerify(Cog):
                     await member.edit(nick=f"{old_nickname.strip()} | [{roblox.name}]")
 
 
-    @command(name="sign-in")
+    @command(name="sign-in", description='Link your roblox account to your discord account.')
     async def sign_in_command(self, ctx):
         default_role = self.get_default_role(ctx.guild)
 
         if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
             await ctx.author.send(f'Hello {ctx.author.mention}, welcome to {ctx.guild.name}. \nPlease tell me your roblox account name', delete_after=self.DELETE_AFTER)
             await self.check_username(ctx.author, default_role)
-
         else:
             await ctx.author.send("You're already verified")
 
-    @command(name="set-default-role")
+
+    @command(name="set-default-role", aliases=['sdr'], description='Set the default role for new member after join. Required administrator permissions.')
+    @has_permissions(administrator=True)
     async def set_default_role_command(self, ctx, roles: Greedy[Role]):
         await del_user_msg(ctx)
 
@@ -64,7 +70,7 @@ class AutoVerify(Cog):
 
 
     async def check_username(self, member, default_role):
-        random_string_to_confirm = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)).strip()
+        # random_string_to_confirm = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10)).strip()
 
         while True:
             msg = await self.bot.wait_for('message', check=lambda message: message.author == member)
@@ -95,23 +101,17 @@ class AutoVerify(Cog):
                         embed.add_field(name=name, value=value, inline=inline)
 
                     await member.send(embed=embed, delete_after=self.DELETE_AFTER)
-                    await member.send(content="Is this your roblox account? ", delete_after=self.DELETE_AFTER)
+                    await member.send(content="Is this your roblox account? y/n", delete_after=self.DELETE_AFTER)
 
                     confirm_msg = await self.bot.wait_for('message', check=lambda message: message.author == member)
 
                     if confirm_msg.content.lower() in ["yes", "y"]:
-                        await member.send(f"Please set this to your description to confirm: \n{random_string_to_confirm}")
-                        user_description, timeout = None, 0
-                        while user_description != random_string_to_confirm and timeout < 600:
-                            rbuser = await self.roblox.get_user(user.id)
-                            user_description = rbuser.description
-                            timeout += 1
-                            await sleep(0.5)
-                            
                         await member.send("Congratulation, you have been verified.")
+
                         guild = self.bot.get_guild(member.guild.id)
                         role = guild.get_role(default_role)
                         old_nickname = member.display_name if '|' not in member.display_name else member.display_name.split("|")[1]
+                        
                         await guild.get_member(member.id).edit(roles=[role], nick=f"{old_nickname.strip()} | [{user.name}]")
                         
                         self.ROBLOX_DB.insert_one({"_id": member.id, "User Name": f"{member.name}#{member.discriminator}", "Roblox ID": user.id, "Joined at": member.joined_at.strftime("%b %d %Y")})
@@ -122,11 +122,6 @@ class AutoVerify(Cog):
                         
                 else:
                     await member.send("Sorry but that account already been used.", delete_after=self.DELETE_AFTER)
-
-    
-    def get_default_role(self, guild):
-        server = self.GUILD_DB.find_one({"_id": guild.id})
-        return server["Default role"]
 
 
     @Cog.listener()
@@ -149,7 +144,7 @@ class AutoVerify(Cog):
             
             await member.send(f'Hello {member.mention}, welcome back to {member.guild.name}', delete_after=self.DELETE_AFTER)
 
-            
+
     @Cog.listener()
     async def on_ready(self):
         if not self.bot.ready:
