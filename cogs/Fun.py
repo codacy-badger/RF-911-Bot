@@ -1,6 +1,5 @@
 import time
 from datetime import datetime, timedelta
-from os import getenv
 from platform import python_version
 from time import time
 from typing import Optional
@@ -9,10 +8,9 @@ from nextcord import Embed, Member
 from nextcord import __version__ as nextcord_version
 from nextcord.ext.commands import BucketType, Cog, Greedy, command, cooldown
 from psutil import Process, virtual_memory
-from pymongo import MongoClient
-from requests import get
 
 from . import del_user_msg
+
 
 DND_EMOJI = "<:dnd:903269917854400532>"
 IDLE_EMOJI = "<:9231idle:903269440911724564>"
@@ -25,14 +23,9 @@ class Fun(Cog):
     def __init__(self, bot):
         self.bot = bot
         self.DELETE_AFTER = 180
-
-        self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
-        self.DB = self.MONGO_CLIENT["RF911"]
-        self.BANNED_DB = self.DB['Banned']
-        self.GUILD_DB = self.DB['Guild']
         
     
-    @command(name="invite", hidden=True)
+    @command(name="invite", description="Get bot Invite and RF Warehouse Invite")
     async def _invite(self, ctx):
         await del_user_msg(ctx)
 
@@ -45,7 +38,7 @@ class Fun(Cog):
 
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=inline)
-        
+
         await ctx.send(embed=embed)
 
     
@@ -69,7 +62,7 @@ class Fun(Cog):
     async def show_bot_stats(self, ctx):
         await del_user_msg(ctx)
 
-        embed = Embed(title= "Yandere Stats", colour=0x2f3136, timestamp=datetime.utcnow())
+        embed = Embed(title= "RF Bot Stats", colour=0x2f3136, timestamp=datetime.utcnow())
         proc = Process()
         with proc.oneshot():
             uptime = timedelta(seconds=time()-proc.create_time())
@@ -91,9 +84,37 @@ class Fun(Cog):
 
         await ctx.send(embed=embed)
 
+    
+    @command(name="roblox-info", aliases=['robloxinfo', 'rbinfo'], description="Get information about user or roblox")
+    async def roblox_info_command(self, ctx, users: Optional[Member] = None, *, name: Optional[str] = None):
+        await del_user_msg(ctx)
 
-    @command(name="userinfo", aliases=["memberinfo", "ui", "mi"])
-    async def user_info(self, ctx, target: Optional[Member]):
+        if users is not None:
+            if self.ROBLOX_DB.find_one({"_id": users.id}) is None:
+                await ctx.send("Can't find roblox account linked with this user")
+            else:
+                user = self.ROBLOX_DB.find_one({"_id": users.id})
+                userID = user["Roblox ID"]
+                roblox = await self.roblox.get_user(userID)
+                await self.get_roblox_info(ctx, roblox)
+        elif name is not None:
+            user_name = await self.roblox.get_user_by_username(name)
+            if user_name == None:
+                await ctx.send("No user found with that username.")
+            else:
+                user = await self.roblox.get_user(user_name.id)
+                await self.get_roblox_info(ctx, user)
+        else:
+            if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
+                await ctx.send("Can't find roblox account linked with this user")
+            else:
+                user = self.ROBLOX_DB.find_one({"_id": ctx.author.id})
+                roblox = await self.roblox.get_user(user["Roblox ID"])
+                await self.get_roblox_info(ctx, roblox)
+
+
+    @command(name="userinfo", aliases=["memberinfo", "ui", "mi"], description="Get information about member")
+    async def user_info(self, ctx, target: Optional[Member] = None):
         await del_user_msg(ctx)
 
         target = target or ctx.author
@@ -116,7 +137,7 @@ class Fun(Cog):
         await ctx.send(embed=embed, delete_after= self.DELETE_AFTER)
 
 
-    @command(name="serverinfo", aliases=["guildinfo", "si", "gi"])
+    @command(name="serverinfo", aliases=["guildinfo", "si", "gi"], description="Get information about server")
     async def server_info(self, ctx):
         await del_user_msg(ctx)
 
@@ -150,7 +171,7 @@ class Fun(Cog):
         await ctx.send(embed=embed, delete_after= self.DELETE_AFTER)
 
     
-    @command(name="av")
+    @command(name="av", aliases=['avatar'] ,description="Get member avatar")
     async def av_command(self, ctx, targets: Greedy[Member] = None):
         await del_user_msg(ctx)
 
@@ -164,7 +185,7 @@ class Fun(Cog):
         await ctx.send(embed=embed, delete_after = self.DELETE_AFTER)
 
     
-    @command(name='info')
+    @command(name='info', description='Get Bot information')
     async def info_command(self, ctx):
         await del_user_msg(ctx)
 
