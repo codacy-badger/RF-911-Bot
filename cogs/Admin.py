@@ -47,12 +47,8 @@ class Admin(Cog):
 
         if 0 < limit <= 100:
             with ctx.channel.typing():
-                await ctx.message.delete()
-                deleted = await ctx.channel.purge(limit=limit, after=datetime.utcnow()-timedelta(days=14),
-												  check=_check)
-
-                await ctx.send(f"Deleted {len(deleted):,} messages.", delete_after=1.5)
-
+                deleted = await ctx.channel.purge(limit=limit+1, after=datetime.utcnow()-timedelta(days=14), check=_check)
+                await ctx.send(f"Deleted {len(deleted) - 1:,} messages.", delete_after=1.5)
         else:
             await ctx.send("The limit provided is not within acceptable bounds.")
 
