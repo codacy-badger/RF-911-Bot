@@ -1,8 +1,41 @@
-from nextcord import Embed, TextChannel, Colour
+from nextcord import Embed, TextChannel, Colour, ui, ButtonStyle
 from nextcord.ext.commands import BucketType, Cog, Greedy, command, cooldown
-from datetime import datetime
+from nextcord.ext.commands.core import has_permissions
+from nextcord.ext.menus import Menu, ButtonMenu
+from datetime import datetime, timezone
 
 from . import del_user_msg
+
+
+class ButtonConfirm(ButtonMenu):
+    def __init__(self, ctx, text):
+        super().__init__(timeout=18000.0, delete_message_after=True)
+        self.text = text
+        self.ctx = ctx
+        self.result = None
+
+    async def send_initial_message(self, ctx, channel):
+        return await channel.send(content="Embed preview before send", embed=self.text, view=self)
+
+    @ui.button(label="Post", style=ButtonStyle.success)
+    async def do_confirm(self, button, interaction):
+        if self.ctx.author == interaction.user:
+            self.result = True
+            self.stop()
+        else:
+            await interaction.response.send_message("You don't have permission to do this action.", ephemeral=True)
+
+    @ui.button(label="Cancel", style=ButtonStyle.danger)
+    async def do_deny(self, button, interaction):
+        if self.ctx.author == interaction.user:
+            self.result = False
+            self.stop()
+        else:
+            await interaction.response.send_message("You don't have permission to do this action.", ephemeral=True)
+
+    async def prompt(self, ctx):
+        await Menu.start(self, ctx, wait=True)
+        return self.result
 
 
 class Embedder(Cog):
@@ -10,8 +43,9 @@ class Embedder(Cog):
         self.bot = bot
 
 
-    @command(name="embedder", aliases=["embed"], description="Embed your message")
+    @command(name="embedder", aliases=["embed"], description="Custem Embedder. Required manage guild permissions.")
     @cooldown(3, 30, BucketType.user)
+    @has_permissions(manage_guild=True)
     async def _msg_embedder(self, ctx, channels : Greedy[TextChannel]):
 
         channel_id = (channel.id for channel in channels).__next__()
@@ -65,8 +99,11 @@ class Embedder(Cog):
             for name, value, inline in [field.content.split(',')]:
                 embedder.add_field(name=name, value=value, inline=False if inline.strip().lower() == "false" else True)
 
-        await del_user_msg(ctx)
-        await channel.send(embed=embedder)
+        answer = await ButtonConfirm(ctx, embedder).prompt(ctx)
+        if answer is True:
+            await channel.send(embed=embedder)
+        else:
+            await ctx.send("Action canceled.", delete_after=10)
 
 
     @Cog.listener()
