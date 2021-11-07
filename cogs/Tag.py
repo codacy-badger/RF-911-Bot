@@ -2,19 +2,18 @@ from os import getenv
 
 from nextcord import Embed
 from nextcord.ext.commands import (Cog, CommandError, command,
-                                   has_permissions, is_owner)
+                                   has_permissions)
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 from typing import Optional
-
-from . import del_user_msg
 
 
 class ExtensionNotloaded(CommandError):
     pass
 
+
 GC_EMOJI = "<:green_check_mark:882362735969579088>"
-X_EMOJI = "❌"
+X_EMOJI = "<:cross_mark:906819264462348318>"
 
 
 class Tag(Cog):
@@ -28,7 +27,7 @@ class Tag(Cog):
         self.TAG_DB = self.DB['Tag']
 
 
-    @command(name="tag")
+    @command(name="tag", description="Create custom tag. \nOption: create, edit, delete. Required manage guild permissions.")
     @has_permissions(manage_guild=True)
     async def tag_command(self, ctx, option: str, tagName: Optional[str], *, tagContent: Optional[str]):
         valid_option = ["create", "edit", "delete"]
@@ -73,9 +72,6 @@ class Tag(Cog):
             embed = Embed(description=f"{GC_EMOJI} Tag `{tagName}` deleted.", colour=0x2f3136)
             await ctx.send(embed=embed)
            
-
-
-    
 
     @Cog.listener()
     async def on_ready(self):
