@@ -1,18 +1,14 @@
-from asyncio import sleep
-from datetime import datetime, timedelta, date
 from os import getenv
 from typing import Optional
-from uuid import uuid4
 
-from nextcord import Embed, Member, NotFound, Object, Role, TextChannel, ButtonStyle
-from nextcord.ext.commands import (BadArgument, CheckFailure, Cog, Converter,
-                                  Greedy, bot_has_permissions, command,
-                                  has_permissions)
-from nextcord.utils import find, get
+from nextcord import Embed, Member, TextChannel
+from nextcord.ext.commands import Cog, Greedy, command, has_permissions
+from nextcord.ext.menus import ListPageSource
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from nextcord.ext.menus import ListPageSource, MenuPages, ButtonMenuPages 
-    
+
+from . import CustomButtonMenuPages
+
 
 class IgnoreMenu(ListPageSource):
     def __init__(self, ctx, data, total):
@@ -22,9 +18,6 @@ class IgnoreMenu(ListPageSource):
         self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
         self.DB = self.MONGO_CLIENT["RF911"]
         self.GUILD_DB = self.DB['Guild']
-        self.MUTE_DB = self.DB["Mute"]
-        self.CASE_DB = self.DB["Case"]
-        self.WARN_DB = self.DB["Warns"]
         self.BANNED_USER_DB = self.DB["Banned User"]
 
         super().__init__(data, per_page=6)
@@ -34,10 +27,7 @@ class IgnoreMenu(ListPageSource):
         offset = (menu.current_page*self.per_page) + 1
         len_data = len(self.entries)
 
-        embed = Embed(title=f"Ignore list",
-                    description=f"Total is {self.total}",
-                    colour =0x2f3136)
-
+        embed = Embed(title=f"Ignore list", description=f"Total is {self.total}", colour=0x2f3136)
         embed.set_footer(text=f"{offset:,} - {min(len_data, offset+self.per_page-1):,} of {len_data:,} ignored.")
 
         for name, value in fields:
@@ -49,7 +39,7 @@ class IgnoreMenu(ListPageSource):
     async def get_author(self, ids):
         return self.BANNED_USER_DB.find_one({"_id": ids})["Added"]
 
-        
+
     async def format_page(self, menu, entries):
         fields = []
         
@@ -58,13 +48,12 @@ class IgnoreMenu(ListPageSource):
             author = self.ctx.guild.get_member(author_id)
 
             data = self.BANNED_USER_DB.find_one({"_id": entry})
-            
+
             if data["Type"] == "user":
                 data = f"<@!{data['_id']}>"
             elif data["Type"] == "channel":
                 data = f"<#{data['_id']}>"
-        
-            
+
             fields.append((f"Added By: {author.name}#{author.discriminator}" ,data))
 
         return await self.write_page(menu, fields)
@@ -78,13 +67,10 @@ class Ignore(Cog):
         self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
         self.DB = self.MONGO_CLIENT["RF911"]
         self.GUILD_DB = self.DB['Guild']
-        self.MUTE_DB = self.DB["Mute"]
-        self.CASE_DB = self.DB["Case"]
-        self.WARN_DB = self.DB["Warns"]
         self.BANNED_USER_DB = self.DB["Banned User"]
     
 
-    @command(name="add-ignore", description="Add channel/role/user into database")
+    @command(name="add-ignore", description="Add channel/role/user into database, administrator only commands")
     @has_permissions(administrator=True)
     async def add_ignore_command(self, ctx, options: str, add_user: Greedy[Member] = None, channels: Greedy[TextChannel] = None):
 
@@ -112,18 +98,14 @@ class Ignore(Cog):
 
     @staticmethod
     async def set_up_menu_page(ctx, data, total_data):
-        menu = ButtonMenuPages(source=IgnoreMenu(ctx, data, total_data),
-                            clear_reactions_after=True,
-                            delete_message_after=True,
-                            style=ButtonStyle.primary,
+        menu = CustomButtonMenuPages(source=IgnoreMenu(ctx, data, total_data),
                             timeout=60.0)
         await menu.start(ctx)
 
 
-    @command(name="show-ignore", description="Show all roles/users/quotes on database")
+    @command(name="show-ignore", aliases=['ignore'], description="Show all roles/users/quotes on database, administrator only commands")
     @has_permissions(administrator=True)
     async def show_ignore_command(self, ctx, option: Optional[str]):
-
         
         ignore = [quote["_id"] for quote in self.BANNED_USER_DB.find({"Guild ID": ctx.guild.id})]
         total_ignore = len(ignore)
@@ -131,31 +113,28 @@ class Ignore(Cog):
         if total_ignore >= 1:
             await self.set_up_menu_page(ctx, ignore, total_ignore)
         else:
-            await ctx.reply("No ignore have been specified", mention_author=True, delete_after=self.DELETE_AFTER)
+            await ctx.reply("No ignore have been specified.", mention_author=True, delete_after=self.DELETE_AFTER)
 
 
     async def delete_all_data(self, ctx):
         self.BANNED_USER_DB.delete_many({"Guild ID": ctx.guild.id})
 
         
-    @command(name="del-all-ignore",aliases=["remove-all"], description="Remove all quotes/users/roles on database")
+    @command(name="del-all-ignore",aliases=["remove-all-ignore"], description="Remove all quotes/users/roles on database, administrator only commands")
     @has_permissions(administrator=True)
     async def del_all_ignore_command(self, ctx):
 
-        a = ["y", "yes"]
-        b = ["n", "no"]
-
         # Ask user for confirmnation
-        await ctx.send(f'Do you want to remove all? y/n\nThis action can\'t not be reverse')
+        await ctx.send(f'Do you want to remove all? y/n \nThis action can\'t not be reverse')
         msg = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author and message.channel.id == ctx.channel.id)
 
         # If user confirmed yes
-        if msg.content in a:
+        if msg.content in ["y", "yes"]:
             await self.delete_all_data(ctx)
             await ctx.reply(f"All ignore have been removed", delete_after=self.DELETE_AFTER)
 
         # If user confirmed no
-        elif msg.content in b:
+        elif msg.content in ["n", "no"]:
             await ctx.reply(f'Action was terminated, nothing were removed', delete_after=self.DELETE_AFTER)
 
         # If user give no proper response
@@ -163,7 +142,7 @@ class Ignore(Cog):
             await ctx.reply(f"No proper response was given, action was terminated", delete_after=self.DELETE_AFTER)
 
 
-    @command(name="del-ignore", aliases=["remove"], description="Remove channel/user from database, required Helpers role")
+    @command(name="del-ignore", aliases=["remove-ignore"], description="Remove channel/user from database, administrator only commands")
     @has_permissions(administrator=True)
     async def del_ignore_command(self, ctx, options: str, add_user: Greedy[Member], channels: Greedy[TextChannel] = None):
 
