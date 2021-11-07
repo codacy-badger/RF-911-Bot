@@ -2,10 +2,11 @@ from asyncio import sleep
 from os import getenv
 from pathlib import Path
 
+from datetime import datetime
 from dotenv import load_dotenv
 # from apscheduler.schedulers.asyncio import AsyncIOScheduler
 # from apscheduler.triggers.cron import CronTrigger
-from nextcord import Activity, ActivityType, AuditLogAction, DMChannel, Intents
+from nextcord import Activity, ActivityType, AuditLogAction, DMChannel, Intents, Embed
 from nextcord.errors import Forbidden
 from nextcord.ext.commands import BadArgument
 from nextcord.ext.commands import Bot as BotBase
@@ -137,8 +138,19 @@ class Bot(BotBase):
 
     async def on_error(self, err, *args, **kwargs):
         if err == "on_command_error":
-            await args[0].send(f"Something went wrong. \n{err}", delete_after=15)
+            await args[0].send(f"Something went wrong: {args[1]}", delete_after=5)
+            embed = Embed(title="Errors occurred",
+                          colour=0x2f3136,
+                          timestamp=datetime.utcnow())
 
+            fields = [("In Server: ", args[0].guild, False),
+                      ("In Channel: ", args[0].channel, False),
+                      ("Command Trigger By:", args[0].author, False),
+                      ("Command Error: ", args[1], False)]
+
+            [embed.add_field(name=name, value=value, inline=inline) for name, value, inline in fields]
+
+            await self.error_channel.send(embed=embed)
         raise
 
 
@@ -179,9 +191,8 @@ class Bot(BotBase):
             print(f'Ping: {round(self.latency* 1000)} ms')
             print('--------------------------------')
 
-            await self.change_presence(activity=Activity(type=ActivityType.watching, name="Raid Force 911")) 
-            # meta = self.get_cog("Meta")
-            # await meta.set()
+            await self.change_presence(activity=Activity(type=ActivityType.watching, name="Raid Force 911"))
+            self.error_channel = self.get_channel(906829491756732456)
 
         else:
             print("------ RF 911 Reconnected ------")
