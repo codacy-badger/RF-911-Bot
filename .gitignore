@@ -141,3 +141,4 @@ cython_debug/
 test.py
 Disabled cogs/
 .vscode/
+message.txt
