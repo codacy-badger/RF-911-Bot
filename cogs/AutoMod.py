@@ -8,7 +8,7 @@ from nextcord.ext.commands import Cog
 from nextcord.utils import get
 from pymongo import MongoClient
 
-from . import Mod
+from .Mod import Mod
 
 
 class AutoMod(Cog):
