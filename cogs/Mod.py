@@ -82,11 +82,11 @@ class Mod(Cog):
         author_role, bot_role, target_role, owner_ids, author_ids, is_admins = self.get_roles(ctx, target)
 
         if (author_role <= target_role and owner_ids != author_ids):
-            await ctx.channel.send("Sorry but you don't have enough permission to do that", delete_after = 30)
+            await ctx.channel.send("Sorry but you don't have enough permission to do that", delete_after = 5)
         elif (bot_role <= target_role):
-            await ctx.channel.send("Sorry but i don't have enough permission to do that", delete_after = 30)
+            await ctx.channel.send("Sorry but i don't have enough permission to do that", delete_after = 5)
         elif is_admins:
-            await ctx.channel.send("Sorry but you can't kick/ban/mute administrators", delete_after = 30)
+            await ctx.channel.send("Sorry but you can't kick/ban/mute administrators", delete_after = 5)
 
 
     def get_roles(self, ctx, target):
@@ -328,10 +328,10 @@ class Mod(Cog):
                 await self.log_send(ctx, embed)
 
 
-    async def mute_members(self, ctx, targets, hours, reason, auto=False):
+    async def mute_members(self, ctx, targets, durations, reason, auto=False):
         unmutes = []
         mute_role = await self.get_mute_role(ctx) # Get mute role
-        tempmute = self.time_converter(hours) # Get duration
+        tempmute = self.time_converter(durations) # Get duration
 
         for target in targets:
             if not mute_role in target.roles: # If user havent been muted 
@@ -345,7 +345,7 @@ class Mod(Cog):
                     self.MUTE_DB.insert_one({"_id": target.id, "role_ids": role_ids,"end time": attr, "Guild ID": ctx.guild.id})
                     await target.edit(roles=[mute_role])
 
-                    if hours is not None:
+                    if durations is not None:
                         duration = (f"{int(tempmute)} second(s)") if tempmute < 60 else (f"{int(tempmute) / 60} minute(s)") if tempmute < 3600 else (f"{int(tempmute) / 3600} hour(s)") if tempmute < 86400 else (f"{int(tempmute) / 86400} day(s)")
                     else:
                         duration, tempmute = "Indefinite", None

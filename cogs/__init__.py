@@ -28,7 +28,7 @@ class CustomButtonMenuPages(ButtonMenuPages, inherit_buttons=False):
         self.add_item(MenuPaginationButton(emoji=self.LAST_PAGE, label="Last", style=ButtonStyle.success))
         self.add_item(MenuPaginationButton(emoji=self.PREVIOUS_PAGE, label="Prev", style=ButtonStyle.blurple))
         
-        # Rearrange the buttons (place the Stop button (first button) at the end of the list)
+        # Reposition buttons
         self.children = [self.children[1], self.children[4], self.children[0], self.children[2], self.children[3]]
         
         # Disable buttons that are unavailable to be pressed at the start

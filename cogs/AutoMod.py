@@ -31,7 +31,7 @@ class AutoMod(Cog):
 
 
     async def auto_muted(self, message, duration, reason, auto=True):
-        unmutes = await self.MOD.mute_members(message, targets=[message.author], hours=duration, reason=reason, auto=auto)
+        unmutes = await self.MOD.mute_members(message, targets=[message.author], durations=duration, reason=reason, auto=auto)
         tempmute = self.MOD.time_converter(duration)
 
         if len(unmutes):
