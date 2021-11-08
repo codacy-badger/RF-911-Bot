@@ -4,7 +4,7 @@ from platform import python_version
 from time import time
 from typing import Optional
 
-from nextcord import Embed, Member
+from nextcord import Embed, Member, ui, ButtonStyle
 from nextcord import __version__ as nextcord_version
 from nextcord.ext.commands import BucketType, Cog, Greedy, command, cooldown
 from psutil import Process, virtual_memory
@@ -19,27 +19,28 @@ OFFLINE_EMOJI = "<:offline:903269494544298014>"
 CREATOR_ID = 188903265931362304
 
 
+class Invite(ui.View):
+    def __init__(self):
+        super().__init__()
+        # we need to quote the query string to make a valid url. Discord will raise an error if it isn't valid.
+
+        RF_WEBSITE = "https://website.raid-force-911.repl.co/"
+        INVITE = 'https://discord.com/api/oauth2/authorize?client_id=902485667232235591&permissions=534689345271&scope=bot'
+        RF_WAREHOUSE = "https://discord.gg/ZZGM8PD3fW"
+
+
+        # Link buttons cannot be made with the decorator
+        # Therefore we have to manually create one.
+        # We add the quoted url to the button, and add the button to the view.
+        self.add_item(ui.Button(style=ButtonStyle.link, label='RF Website', url=RF_WEBSITE))
+        self.add_item(ui.Button(style=ButtonStyle.link, label='RF Bot Invite', url=INVITE))
+        self.add_item(ui.Button(style=ButtonStyle.link, label='RF WareHouse', url=RF_WAREHOUSE))
+
+
 class Fun(Cog):
     def __init__(self, bot):
         self.bot = bot
         self.DELETE_AFTER = 180
-        
-    
-    @command(name="invite", description="Get bot Invite and RF Warehouse Invite")
-    async def _invite(self, ctx):
-        await del_user_msg(ctx)
-
-        embed = Embed(title= "RF 911 Official Bot", colour=0x2f3136)
-        embed.set_thumbnail(url=self.bot.user.display_avatar)
-        fields = [
-            ("Invite link: ", "[click here](https://discord.com/api/oauth2/authorize?client_id=902485667232235591&permissions=534689345271&scope=bot)", False),
-            ("RF Warehouse: ", "[click here](https://discord.gg/ZZGM8PD3fW)", False)
-        ]
-
-        for name, value, inline in fields:
-            embed.add_field(name=name, value=value, inline=inline)
-
-        await ctx.send(embed=embed)
 
     
     @command(name='ping', description='Show Bot Latency')
@@ -75,7 +76,7 @@ class Fun(Cog):
 			("Python version", python_version(), True),
 			("nextcord.py version", nextcord_version, True),
 			("Uptime", str(uptime)[:-7], True),
-			("CPU time", cpu_time, True),
+			("CPU time", str(cpu_time)[:-7], True),
 			("Memory usage", f"{mem_usage:,.3f} / {mem_total:,.0f} MiB ({mem_of_total:.0f}%)", True)
 		]
 
@@ -191,18 +192,20 @@ class Fun(Cog):
 
         owner = self.bot.get_user(CREATOR_ID)
         created_at = self.bot.user.created_at.strftime("%d/%m/%Y")
+        uptime = timedelta(seconds=time()-Process().create_time())
         
-        embed = Embed(color=0x2f3136, title='')
+        embed = Embed(color=0xe1cc04, title='')
         embed.set_author(name=self.bot.user.name, icon_url=self.bot.user.display_avatar)
+        embed.set_footer(text=(f"Uptime: {str(uptime)[:-7]} "))
         fields = [
             ('Created by ', owner, True),
             ('Created at ', created_at, True),
-            ('RF 911 Website ', "[Link](https://website.raid-force-911.repl.co/)", True)
+            ('Version ', self.bot.VERSION, True),
         ]
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=inline)
 
-        await ctx.send(embed=embed, delete_after= self.DELETE_AFTER)
+        await ctx.send(embed=embed, view=Invite())
 
 
     @Cog.listener()
