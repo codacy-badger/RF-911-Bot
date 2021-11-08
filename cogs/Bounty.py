@@ -1,9 +1,10 @@
+from datetime import datetime
 from os import getenv
 from typing import Optional
 
-from nextcord import Embed, TextChannel, Member, ui, Interaction, ButtonStyle
+from nextcord import ButtonStyle, Embed, Interaction, Member, TextChannel, ui
 from nextcord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
-                                  has_permissions, has_role)
+                                   has_permissions, has_role)
 from nextcord.ext.commands.errors import MissingRole
 from nextcord.ext.menus import ButtonMenu, Menu
 from pymongo import MongoClient
@@ -120,13 +121,12 @@ class Bounty(Cog):
     @command(name="submit-bounty", aliases=['sb'], description="Submit bounty to bounty submission channel. \nRequire `Bounty Hunter` role.")
     @cooldown(rate=4, per=7200, type=BucketType.user)
     @has_role("Bounty Hunter")
-    async def _bounty(self, ctx, target: Optional[str] = "Roblox",  *, reason: Optional[str] = "No reason provided."):
+    async def _bounty(self, ctx, target: str,  *, reason: str):
         CHECK_CHANNEL = await self.check_channel(ctx)
         await del_user_msg(ctx)
 
         if CHECK_CHANNEL:
             user_name = await self.roblox.get_user_by_username(target)
-
             if user_name == None:
                 await ctx.send("No user found with that username.")
             else:
@@ -134,7 +134,7 @@ class Bounty(Cog):
                 url = get(
                     f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user_name.id}").json()
 
-                embed = Embed(title="***TARGET INFO***", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
+                embed = Embed(title=f"{user.name.capitalize()} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile", timestamp=datetime.utcnow())
                 embed.set_author(name=f"Resquested by {ctx.author}", icon_url=f'{ctx.author.display_avatar}')
                 embed.set_image(url=url["data"][0]["imageUrl"])
 
