@@ -33,7 +33,7 @@ class Invite(ui.View):
         # Therefore we have to manually create one.
         # We add the quoted url to the button, and add the button to the view.
         self.add_item(ui.Button(style=ButtonStyle.link, label='RF Website', url=RF_WEBSITE))
-        self.add_item(ui.Button(style=ButtonStyle.link, label='RF Bot Invite', url=INVITE))
+        # self.add_item(ui.Button(style=ButtonStyle.link, label='RF Bot Invite', url=INVITE))
         self.add_item(ui.Button(style=ButtonStyle.link, label='RF WareHouse', url=RF_WAREHOUSE))
 
 
