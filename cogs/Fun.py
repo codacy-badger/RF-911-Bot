@@ -9,6 +9,7 @@ from nextcord import __version__ as nextcord_version
 from nextcord import ui
 from nextcord.ext.commands import BucketType, Cog, Greedy, command, cooldown
 from psutil import Process, virtual_memory
+from roblox import Client
 
 from . import del_user_msg
 
@@ -41,6 +42,7 @@ class Fun(Cog):
     def __init__(self, bot):
         self.bot = bot
         self.DELETE_AFTER = 180
+        self.roblox = Client()
 
     
     @command(name='ping', description='Show Bot Latency')
