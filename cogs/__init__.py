@@ -1,8 +1,9 @@
-from nextcord import ui, ButtonStyle
+from nextcord import ButtonStyle, ui
 from nextcord.ext.commands import Cog
 from nextcord.ext.menus import ButtonMenuPages, MenuPaginationButton
 
 from . import *
+
 
 class CustomButtonMenuPages(ButtonMenuPages, inherit_buttons=False):
     """
