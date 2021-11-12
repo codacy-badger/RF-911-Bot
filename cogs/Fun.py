@@ -1,5 +1,6 @@
 import time
 from datetime import datetime, timedelta
+from os import getenv
 from platform import python_version
 from time import time
 from typing import Optional
@@ -9,6 +10,7 @@ from nextcord import __version__ as nextcord_version
 from nextcord import ui
 from nextcord.ext.commands import BucketType, Cog, Greedy, command, cooldown
 from psutil import Process, virtual_memory
+from pymongo import MongoClient
 from roblox import Client
 
 from . import del_user_msg
@@ -29,7 +31,6 @@ class Invite(ui.View):
         INVITE = 'https://discord.com/api/oauth2/authorize?client_id=902485667232235591&permissions=534689345271&scope=bot'
         RF_WAREHOUSE = "https://discord.gg/ZZGM8PD3fW"
 
-
         # Link buttons cannot be made with the decorator
         # Therefore we have to manually create one.
         # We add the quoted url to the button, and add the button to the view.
@@ -43,6 +44,11 @@ class Fun(Cog):
         self.bot = bot
         self.DELETE_AFTER = 180
         self.roblox = Client()
+        
+        self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
+        self.DB = self.MONGO_CLIENT["RF911"]
+        self.GUILD_DB = self.DB['Guild']
+        self.ROBLOX_DB = self.DB['Roblox']
 
     
     @command(name='ping', description='Show Bot Latency')
