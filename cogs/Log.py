@@ -1,10 +1,10 @@
 from datetime import datetime
 from os import getenv
+from typing import Optional
 
 from nextcord import Embed, File
 from nextcord.ext.commands import Cog
 from pymongo import MongoClient
-from typing import Optional
 
 
 class Log(Cog):
@@ -24,30 +24,30 @@ class Log(Cog):
             if embed is not None:
                 await channel.send(embed=embed)
             elif file is not None:
-                with open("./message.txt", 'rb') as f:
+                with open("./cogs/message/message.txt", 'rb') as f:
                     await channel.send(file=File(f))
         else:
             pass
 
 
-    @Cog.listener()
-    async def on_member_update(self, before, after) -> None:
-        if before.roles != after.roles:
-            if len(after.roles) < len(before.roles): # Remove roles
-                removed_roles = list(before.roles)
-                [removed_roles.remove(role) for role in after.roles]
-                roles = ", ".join([role.mention for role in removed_roles])
-                embed = Embed(title="", colour=0xff470f, timestamp=datetime.utcnow(), description=f"**{after.mention} was removed from {roles}**")
-            else: # Receive roles
-                given_roles = list(after.roles)
-                [given_roles.remove(role) for role in before.roles]
-                roles = ", ".join([role.mention for role in given_roles])
-                embed = Embed(title="", colour=0x337fd5, timestamp=datetime.utcnow(), description=f'**{after.mention} was given roles {roles}**')
+    # @Cog.listener()
+    # async def on_member_update(self, before, after) -> None:
+    #     if before.roles != after.roles:
+    #         if len(after.roles) < len(before.roles): # Remove roles
+    #             removed_roles = list(before.roles)
+    #             [removed_roles.remove(role) for role in after.roles]
+    #             roles = ", ".join([role.mention for role in removed_roles])
+    #             embed = Embed(title="", colour=0xff470f, timestamp=datetime.utcnow(), description=f"**{after.mention} was removed from {roles}**")
+    #         else: # Receive roles
+    #             given_roles = list(after.roles)
+    #             [given_roles.remove(role) for role in before.roles]
+    #             roles = ", ".join([role.mention for role in given_roles])
+    #             embed = Embed(title="", colour=0x337fd5, timestamp=datetime.utcnow(), description=f'**{after.mention} was given roles {roles}**')
 
-            embed.set_author(name=after, icon_url=after.display_avatar)
-            embed.set_footer(text=f"Author: {after}, ID: {after.id}")
+    #         embed.set_author(name=after, icon_url=after.display_avatar)
+    #         embed.set_footer(text=f"Author: {after}, ID: {after.id}")
 
-            await self.log_send(after.guild, embed=embed)
+    #         await self.log_send(after.guild, embed=embed)
 
 
     @Cog.listener()
@@ -87,7 +87,7 @@ class Log(Cog):
 
     @Cog.listener()
     async def on_bulk_message_delete(self, messages) -> None:
-        with open("message.txt", 'w') as f:
+        with open("./cogs/message/message.txt", 'w') as f:
             f.write(f"{len(messages)} messages deleted in #{messages[0].channel.name}:\n\n\n")
             for message in messages:
                 f.write(f"{message.author} (User ID: {message.author.id} Message ID: {message.id})\n{message.content}\n\n\n")
