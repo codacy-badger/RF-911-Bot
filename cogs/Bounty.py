@@ -97,7 +97,8 @@ class Bounty(Cog):
         await ctx.send(f'Bounty Submissions channel set/update to <#{channel_id}>', delete_after = 30)
 
     
-    async def get_roblox_info(self, ctx, user):
+    @staticmethod
+    async def get_roblox_info(ctx, user):
         url = get(
                 f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user.id}").json()
 
