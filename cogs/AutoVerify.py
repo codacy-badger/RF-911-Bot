@@ -1,14 +1,15 @@
 import random
 import string
+from asyncio import sleep
 from os import getenv
 
 from nextcord import DMChannel, Embed, Member, Role
-from nextcord.ext.commands import Cog, Greedy, command, is_owner, has_permissions
+from nextcord.ext.commands import (Cog, Greedy, command, has_permissions,
+                                   is_owner)
 from nextcord.ext.commands.core import check
 from pymongo import MongoClient
 from requests import get
 from roblox import Client
-from asyncio import sleep
 
 from . import del_user_msg
 
@@ -49,7 +50,7 @@ class AutoVerify(Cog):
 
     @command(name="sign-in", description='Link your roblox account to your discord account.')
     async def sign_in_command(self, ctx):
-        default_role = self.get_default_role(ctx.guild)
+        default_role = await self.get_default_role(ctx.guild)
 
         if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
             await ctx.author.send(f'Hello {ctx.author.mention}, welcome to {ctx.guild.name}. \nPlease tell me your roblox account name', delete_after=self.DELETE_AFTER)
@@ -124,7 +125,7 @@ class AutoVerify(Cog):
 
     @Cog.listener()
     async def on_member_join(self, member):
-        default_role = self.get_default_role(member.guild)
+        default_role = await self.get_default_role(member.guild)
 
         if self.ROBLOX_DB.find_one({"_id": member.id}) is None:
             await member.send(f'Hello {member.mention}, welcome to {member.guild.name}. \nBefore you can access any chat in server you need to verify yourself. \nPlease tell me your roblox account name', delete_after=self.DELETE_AFTER)

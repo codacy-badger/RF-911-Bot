@@ -1,14 +1,14 @@
+from os import getenv
 from pathlib import Path
 from typing import Optional
 
 from nextcord import Embed
-from nextcord.ext.commands import Cog, command
+from nextcord.ext.commands import BucketType, Cog, Greedy, command, cooldown, has_permissions
 from nextcord.ext.menus import ListPageSource
 from nextcord.utils import get
 from pymongo import MongoClient
-from os import getenv
 
-from . import del_user_msg, CustomButtonMenuPages
+from . import CustomButtonMenuPages, del_user_msg
 
 
 async def syntax(command):
@@ -87,6 +87,7 @@ class Help(Cog):
 
     
     @command(name="help", description='Show help information')
+    @has_permissions(administrator=True)
     async def help_command(self, ctx, cmds: Optional[str] = None):
         await del_user_msg(ctx)
 

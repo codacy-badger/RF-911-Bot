@@ -1,8 +1,9 @@
-from nextcord import Embed, TextChannel, Colour, ui, ButtonStyle
+from datetime import datetime
+
+from nextcord import ButtonStyle, Colour, Embed, TextChannel, ui
 from nextcord.ext.commands import BucketType, Cog, Greedy, command, cooldown
 from nextcord.ext.commands.core import has_permissions
-from nextcord.ext.menus import Menu, ButtonMenu
-from datetime import datetime, timezone
+from nextcord.ext.menus import ButtonMenu, Menu
 
 from . import del_user_msg
 
@@ -43,9 +44,9 @@ class Embedder(Cog):
         self.bot = bot
 
 
-    @command(name="embedder", aliases=["embed"], description="Custem Embedder. Required manage guild permissions.")
+    @command(name="embedder", aliases=["embed"], description="Custem Embedder. Required Administrator permissions.")
     @cooldown(3, 30, BucketType.user)
-    @has_permissions(manage_guild=True)
+    @has_permissions(administrator=True)
     async def _msg_embedder(self, ctx, channels : Greedy[TextChannel]):
 
         channel_id = (channel.id for channel in channels).__next__()

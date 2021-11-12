@@ -4,13 +4,13 @@ from platform import python_version
 from time import time
 from typing import Optional
 
-from nextcord import Embed, Member, ui, ButtonStyle
+from nextcord import ButtonStyle, Embed, Member
 from nextcord import __version__ as nextcord_version
+from nextcord import ui
 from nextcord.ext.commands import BucketType, Cog, Greedy, command, cooldown
 from psutil import Process, virtual_memory
 
 from . import del_user_msg
-
 
 DND_EMOJI = "<:dnd:903269917854400532>"
 IDLE_EMOJI = "<:9231idle:903269440911724564>"
@@ -44,7 +44,7 @@ class Fun(Cog):
 
     
     @command(name='ping', description='Show Bot Latency')
-    @cooldown(5, 10, BucketType.user)
+    @cooldown(2, 10, BucketType.user)
     async def _ping(self, ctx):
         await del_user_msg(ctx)
 
@@ -60,6 +60,7 @@ class Fun(Cog):
 
 
     @command(name="stats", description='Show bot stats.')
+    @cooldown(2, 10, BucketType.user)
     async def show_bot_stats(self, ctx):
         await del_user_msg(ctx)
 
@@ -87,6 +88,7 @@ class Fun(Cog):
 
     
     @command(name="roblox-info", aliases=['robloxinfo', 'rbinfo'], description="Get information about user or roblox")
+    @cooldown(2, 10, BucketType.user)
     async def roblox_info_command(self, ctx, users: Optional[Member] = None, *, name: Optional[str] = None):
         await del_user_msg(ctx)
 
@@ -115,6 +117,7 @@ class Fun(Cog):
 
 
     @command(name="userinfo", aliases=["memberinfo", "ui", "mi"], description="Get information about member")
+    @cooldown(2, 10, BucketType.user)
     async def user_info(self, ctx, target: Optional[Member] = None):
         await del_user_msg(ctx)
 
@@ -139,6 +142,7 @@ class Fun(Cog):
 
 
     @command(name="serverinfo", aliases=["guildinfo", "si", "gi"], description="Get information about server")
+    @cooldown(2, 10, BucketType.user)
     async def server_info(self, ctx):
         await del_user_msg(ctx)
 
@@ -173,6 +177,7 @@ class Fun(Cog):
 
     
     @command(name="av", aliases=['avatar'] ,description="Get member avatar")
+    @cooldown(2, 10, BucketType.user)
     async def av_command(self, ctx, targets: Greedy[Member] = None):
         await del_user_msg(ctx)
 
@@ -187,6 +192,7 @@ class Fun(Cog):
 
     
     @command(name='info', description='Get Bot information')
+    @cooldown(2, 10, BucketType.user)
     async def info_command(self, ctx):
         await del_user_msg(ctx)
 

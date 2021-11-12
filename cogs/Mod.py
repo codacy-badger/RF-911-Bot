@@ -1,13 +1,14 @@
 from asyncio import sleep
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from os import getenv
 from typing import Optional
 from uuid import uuid4
 
-from nextcord import Embed, Member, NotFound, Object, Role, TextChannel
+from nextcord import (Embed, Member, NotFound, Object, PermissionOverwrite,
+                      Role, TextChannel)
 from nextcord.ext.commands import (BadArgument, CheckFailure, Cog, Converter,
-                                  Greedy, bot_has_permissions, command,
-                                  has_permissions)
+                                   Greedy, bot_has_permissions, command,
+                                   has_permissions)
 from nextcord.utils import find, get
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
@@ -101,11 +102,15 @@ class Mod(Cog):
     
 
     async def lockdown_start(self, ctx, channel):
-        await channel.set_permissions(ctx.guild.default_role, send_messages=False)
+        overwrite = PermissionOverwrite()
+        overwrite.send_messages = False
+        await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite, reason=f"Lockdown started by: {ctx.author.name}#{ctx.author.discriminator}")
 
 
     async def lockdown_end(self, ctx, channel):
-        await channel.set_permissions(ctx.guild.default_role, send_messages=True)
+        overwrite = PermissionOverwrite()
+        overwrite.send_messages = None
+        await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite, reason=f"Lockdown ended by: {ctx.author.name}#{ctx.author.discriminator}")
 
 
     @command(name="set-lockdown-channel", aliases=["sldc"], description="Specify list of channel to lockdown. Required administrator permissions.")
@@ -454,7 +459,7 @@ class Mod(Cog):
 
 
     @command(name='set-log-channel', aliases=['slc'], description="Set log channel for logging. Required administrator permissions.")
-    @bot_has_permissions(administrator=True)
+    @has_permissions(administrator=True)
     async def _logchannel(self, ctx, channel: Greedy[TextChannel]):
         await del_user_msg(ctx)
 

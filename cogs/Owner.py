@@ -2,7 +2,9 @@ from pathlib import Path
 from typing import Optional
 
 from nextcord import Embed
-from nextcord.ext.commands import Cog, CommandError, command, is_owner, DisabledCommand
+from nextcord.ext.commands import (Cog, CommandError, DisabledCommand, command,
+                                   is_owner)
+
 from . import del_user_msg
 
 
