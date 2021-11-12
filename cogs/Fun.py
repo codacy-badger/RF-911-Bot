@@ -14,6 +14,7 @@ from pymongo import MongoClient
 from roblox import Client
 
 from . import del_user_msg
+from .Bounty import Bounty
 
 DND_EMOJI = "<:dnd:903269917854400532>"
 IDLE_EMOJI = "<:9231idle:903269440911724564>"
@@ -114,7 +115,7 @@ class Fun(Cog):
                 await ctx.send("No user found with that username.")
             else:
                 user = await self.roblox.get_user(user_name.id)
-                await self.get_roblox_info(ctx, user)
+                await Bounty.get_roblox_info(ctx, user)
         else:
             if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
                 await ctx.send("Can't find roblox account linked with this user")

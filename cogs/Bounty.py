@@ -117,7 +117,7 @@ class Bounty(Cog):
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=inline)
 
-        await ctx.send(embed= embed)
+        await ctx.send(embed=embed)
         
     @staticmethod  
     async def del_bounty(msg):
