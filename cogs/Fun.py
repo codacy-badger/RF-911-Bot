@@ -108,7 +108,7 @@ class Fun(Cog):
                 user = self.ROBLOX_DB.find_one({"_id": users.id})
                 userID = user["Roblox ID"]
                 roblox = await self.roblox.get_user(userID)
-                await self.get_roblox_info(ctx, roblox)
+                await Bounty.get_roblox_info(ctx, roblox)
         elif name is not None:
             user_name = await self.roblox.get_user_by_username(name)
             if user_name == None:
