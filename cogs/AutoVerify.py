@@ -54,7 +54,7 @@ class AutoVerify(Cog):
 
         if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
             await ctx.author.send(f'Hello {ctx.author.mention}, welcome to {ctx.guild.name}. \nPlease tell me your roblox account name', delete_after=self.DELETE_AFTER)
-            await self.check_username(ctx.author, default_role, False)
+            await self.check_username(ctx.author, default_role, new=False)
         else:
             await ctx.author.send("You're already verified")
 
@@ -112,8 +112,6 @@ class AutoVerify(Cog):
                         if new:
                             role = guild.get_role(default_role)
                             await guild.get_member(member.id).edit(roles=[role], nick=f"{old_nickname.strip()} | [{user.name}]")
-                        else:
-                            await guild.get_member(member.id).edit(nick=f"{old_nickname.strip()} | [{user.name}]")
                         
                         self.ROBLOX_DB.insert_one({"_id": member.id, "User Name": f"{member.name}#{member.discriminator}", "Roblox ID": user.id, "Joined at": member.joined_at.strftime("%b %d %Y")})
                         break
