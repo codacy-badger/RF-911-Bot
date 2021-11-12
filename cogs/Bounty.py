@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from os import getenv
 from typing import Optional
 
@@ -19,6 +19,7 @@ class ButtonConfirm(ButtonMenu):
         super().__init__(timeout=18000.0, delete_message_after=True)
         self.text = text
         self.result = None
+        self.host = None
 
     async def send_initial_message(self, ctx, channel):
         return await channel.send(embed=self.text, view=self)
@@ -27,6 +28,7 @@ class ButtonConfirm(ButtonMenu):
     async def do_confirm(self, button, interaction):
         if "Logistics" in [role.name for role in interaction.user.roles]:
             self.result = True
+            self.host = interaction.user
             self.stop()
         else:
             await interaction.response.send_message("You don't have permission to do this action.", ephemeral=True)
@@ -41,7 +43,7 @@ class ButtonConfirm(ButtonMenu):
 
     async def prompt(self, ctx):
         await Menu.start(self, ctx, wait=True)
-        return self.result
+        return self.result, self.host
 
 
 class Bounty(Cog):
@@ -116,6 +118,10 @@ class Bounty(Cog):
             embed.add_field(name=name, value=value, inline=inline)
 
         await ctx.send(embed= embed)
+        
+    @staticmethod  
+    async def del_bounty(msg):
+        await msg.edit(content="Expired")
 
 
     @command(name="submit-bounty", aliases=['sb'], description="Submit bounty to bounty submission channel. \nRequire `Bounty Hunter` role.")
@@ -134,7 +140,7 @@ class Bounty(Cog):
                 url = get(
                     f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user_name.id}").json()
 
-                embed = Embed(title=f"{user.name.capitalize()} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile", timestamp=datetime.utcnow())
+                embed = Embed(title=f"{user.name.capitalize()} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
                 embed.set_author(name=f"Resquested by {ctx.author}", icon_url=f'{ctx.author.display_avatar}')
                 embed.set_image(url=url["data"][0]["imageUrl"])
 
@@ -146,13 +152,16 @@ class Bounty(Cog):
                 for name, value, inline in fields:
                     embed.add_field(name=name, value=value, inline=inline)
 
-                answer = await ButtonConfirm(embed).prompt(ctx)
+                answer, host = await ButtonConfirm(embed).prompt(ctx)
                 if answer is True:
                     hitlist = await self.get_hitlist(ctx)
                     if hitlist is None:
                         await ctx.send("Hitlist channel haven't been specified.")
                     else:
-                        await hitlist.send(embed=embed)
+                        expired_time = datetime.now() + timedelta(days=5)
+                        embed.set_footer(text=f"Host by {host}, Expired: {expired_time.strftime('%d-%m-%Y')}")
+                        msg = await hitlist.send(embed=embed)
+                        self.bot.scheduler.add_job(self.del_bounty, args=[msg], next_run_time=expired_time)
                 else:
                     pass
 
