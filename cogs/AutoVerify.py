@@ -54,7 +54,7 @@ class AutoVerify(Cog):
 
         if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
             await ctx.author.send(f'Hello {ctx.author.mention}, welcome to {ctx.guild.name}. \nPlease tell me your roblox account name', delete_after=self.DELETE_AFTER)
-            await self.check_username(ctx.author, default_role)
+            await self.check_username(ctx.author, default_role, False)
         else:
             await ctx.author.send("You're already verified")
 
@@ -70,7 +70,7 @@ class AutoVerify(Cog):
         await ctx.send(content=f"Default have been set/update to <@&{role_id}>", delete_after = self.DELETE_AFTER)
 
 
-    async def check_username(self, member, default_role):
+    async def check_username(self, member, default_role, new=True):
         while True:
             msg = await self.bot.wait_for('message', check=lambda message: message.author == member)
             user = await self.roblox.get_user_by_username(msg.content)
@@ -106,12 +106,14 @@ class AutoVerify(Cog):
 
                     if confirm_msg.content.lower() in ["yes", "y"]:
                         await member.send("Congratulation, you have been verified.")
-
                         guild = self.bot.get_guild(member.guild.id)
-                        role = guild.get_role(default_role)
                         old_nickname = member.display_name if '|' not in member.display_name else member.display_name.split("|")[1]
-
-                        await guild.get_member(member.id).edit(roles=[role], nick=f"{old_nickname.strip()} | [{user.name}]")
+                        
+                        if new:
+                            role = guild.get_role(default_role)
+                            await guild.get_member(member.id).edit(roles=[role], nick=f"{old_nickname.strip()} | [{user.name}]")
+                        else:
+                            await guild.get_member(member.id).edit(nick=f"{old_nickname.strip()} | [{user.name}]")
                         
                         self.ROBLOX_DB.insert_one({"_id": member.id, "User Name": f"{member.name}#{member.discriminator}", "Roblox ID": user.id, "Joined at": member.joined_at.strftime("%b %d %Y")})
                         break
