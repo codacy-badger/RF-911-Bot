@@ -1,7 +1,10 @@
 from asyncio import sleep
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from json import dump, load
 from os import getenv
+from os.path import exists
 
+from apscheduler.jobstores.base import JobLookupError, ConflictingIdError
 from better_profanity import profanity
 from nextcord import Member
 from nextcord.ext.commands import Cog
@@ -11,17 +14,16 @@ from pymongo import MongoClient
 from .Mod import Mod
 
 
-class AutoMod(Cog):
+class Automod(Cog):
     def __init__(self, bot):
         self.bot = bot
         self.MOD = Mod(bot)
         self.first_times = True
 
-        self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
+        self.MONGO_CLIENT = MongoClient(getenv("DATABASE"))
         self.DB = self.MONGO_CLIENT["RF911"]
-        self.BANNED_DB = self.DB['Banned']
-        self.GUILD_DB = self.DB['Guild']
-        self.SPIKE_DB = self.DB["Spike"]
+        self.BANNED_DB = self.DB["Banned"]
+        self.GUILD_DB = self.DB["Guild"]
         self.BANNED_WORDS_DB = self.DB["Banned Words"]
 
 
@@ -31,100 +33,180 @@ class AutoMod(Cog):
 
 
     async def auto_muted(self, message, duration, reason, auto=True):
-        unmutes = await self.MOD.mute_members(message, targets=[message.author], durations=duration, reason=reason, auto=auto)
+        unmutes = await self.MOD.mute_members(
+            message,
+            targets=[message.author],
+            durations=duration,
+            reason=reason,
+            auto=auto,
+        )
         tempmute = self.MOD.time_converter(duration)
 
         if len(unmutes):
             await sleep(tempmute)
-            await self.MOD.unmute_members(message, message.guild, [message.author], auto=auto)
+            await self.MOD.unmute_members(
+                message, message.guild, [message.author], auto=auto
+            )
 
 
-    async def check_db(self, message):
-        if self.SPIKE_DB.find_one({"_id": message.author.id}) is None:
-            return False
-        return True
+    @staticmethod
+    async def create_user(message):
+        user_info = {
+            "User Name": f"{message.author}",
+            "Spike": 0,
+            "Spam Message": [],
+            "Mention Message": [],
+        }
 
-    
-    async def Spike_check(self, message, SPIKE_COUNT, SPIKE_INCREASE):
-        spike_updating = await self.check_db(message)
-        if not spike_updating:
-            self.SPIKE_DB.insert_one({"_id": message.author.id, "Name": f"{message.author.name}#{message.author.discriminator}",  "Spike": 1})
-        else:
-            self.SPIKE_DB.update_one({"_id": message.author.id}, {"$set": {"Spike": SPIKE_COUNT + SPIKE_INCREASE}})
+        with open(f"./cogs/message/{message.guild.id}.json", "r+") as f:
+            data = load(f)
+            data[str(message.author.id)] = user_info
+            f.seek(0)
+            dump(data, f, indent=4)
+            f.truncate()
 
 
     async def load_banned_words(self, message):
         BANNED_WORDS_ID = self.BANNED_WORDS_DB.find_one({"_id": message.guild.id})
 
         if BANNED_WORDS_ID is None:
-            self.BANNED_WORDS_DB.insert_one({"_id": message.guild.id, "Words": ['nigga', 'fagot']})
-            BANNED_WORDS = ['nigga', 'fagot']
+            self.BANNED_WORDS_DB.insert_one(
+                {"_id": message.guild.id, "Words": ["nigga", "fagot"]}
+            )
+            BANNED_WORDS = ["nigga", "fagot"]
         else:
             BANNED_WORDS = BANNED_WORDS_ID["Words"]
-            
+
         profanity.load_censor_words(BANNED_WORDS)
+
+
+    async def check_spike(self, message):
+        def get_info():
+            with open(f"./cogs/message/{message.guild.id}.json", "r") as f:
+                user = load(f)
+            return user[f"{message.author.id}"]
+
+        try:
+            userInfo = get_info()
+        except KeyError:
+            await self.create_user(message)
+            userInfo = get_info()
+
+        return userInfo["Spike"]
+
+
+    @staticmethod
+    async def write_file(message, position ,option, content = None):
+        GUILD_INFO = f"./cogs/message/{message.guild.id}.json"
+        
+        with open(GUILD_INFO, 'r+') as f:
+            user = load(f)
+
+            if position == "Spike":
+                if option:
+                    user[str(message.author.id)]["Spike"] = user[str(message.author.id)]['Spike'] + 1
+                else:
+                    user[str(message.author.id)]['Spike'] = 0
+            elif position == "Spam":
+                if option:
+                    user[str(message.author.id)]['Spam Message'].append(content)
+                else:
+                    user[str(message.author.id)]['Spam Message'] = []
+            elif position == "Mention":
+                if option:
+                    user[str(message.author.id)]['Mention Message'].append(content)
+                else:
+                    user[str(message.author.id)]['Mention Message'] = []
+            else:
+                user[str(message.author.id)]['Spike'] = 0
+                user[str(message.author.id)]['Spam Message'] = []
+                user[str(message.author.id)]['Mention Message'] = []
+
+            f.seek(0)
+            dump(user, f, indent=4)
+            f.truncate()
+
+
+    @staticmethod
+    async def reset_spike(message):
+        GUILD_INFO = f"./cogs/message/{message.guild.id}.json"
+        
+        with open(GUILD_INFO, 'r+') as f:
+            user = load(f)
+            user[str(message.author.id)]['Spike'] = 0
+
+            f.seek(0)
+            dump(user, f, indent=4)
+            f.truncate()
 
 
     @Cog.listener()
     async def on_message(self, message):
-        def _check_mass_mention(m):
-            return (m.author == message.author and len(m.mentions) >= 4 and (datetime.now(timezone.utc) - m.created_at).seconds <= 30)
-        def _check_spam(m):
-            return (m.author == message.author and (datetime.now(timezone.utc) - m.created_at).seconds < 5)
-        
+        if not exists(f"./cogs/message/{message.guild.id}.json"):
+            with open(f"./cogs/message/{message.guild.id}.json", "w") as f:
+                f.write("{}")
+
         if self.first_times:
             await self.load_banned_words(message)
             self.first_times = False
+            
+        MASS_MENTION = len(list(filter(lambda m: m.author == message.author and len(m.mentions) >= 5 and (datetime.now(timezone.utc) - m.created_at).seconds <= 10, self.bot.cached_messages,)))
+        IS_ADMINS = (message.author.guild_permissions.administrator if type(message.author) == Member else get(message.guild.members, id=message.author.id))
 
+        if not message.author.bot and not IS_ADMINS:
+            SPIKE = await self.check_spike(message)
 
-        SPIKE = self.SPIKE_DB.find_one({"_id": message.author.id})
-        SPIKE_COUNT = SPIKE["Spike"] if SPIKE is not None else 1
-        MAXED_SPIKE = 3
+            if len(message.mentions):
+                await self.write_file(message, "Mention", option=True, content=message.id)
+                self.bot.scheduler.add_job(self.write_file, id=f"{message.author.id}-MENTION" ,args=[message, "Mention", False, None] , next_run_time=(datetime.now()+timedelta(seconds=1.5)), replace_existing=True)
 
-        SPAM_MENTION = len(list(filter(lambda m: (m.author == message.author and len(m.mentions) and (datetime.now(timezone.utc) - m.created_at).seconds < 30), self.bot.cached_messages)))
-        SPAM = len(list(filter(lambda m: _check_spam(m), self.bot.cached_messages)))
-        MASS_MENTION = len(list(filter(lambda m: _check_mass_mention(m), self.bot.cached_messages)))
-        CONTAIN_BANNED = profanity.contains_profanity(message.content)
+            elif len(message.content):
+                await self.write_file(message, "Spam", option=True, content=message.id)
+                self.bot.scheduler.add_job(self.write_file, id=f"{message.author.id}-SPAM" ,args=[message, "Spam", False, None] , next_run_time=(datetime.now()+timedelta(seconds=1.5)), replace_existing=True)
 
-        is_admins = message.author.guild_permissions.administrator if type(message.author) == Member else get(message.guild.members, id=message.author.id)
+            if SPIKE > 0:
+                try:
+                    self.bot.scheduler.add_job(self.reset_spike, id=f"{message.author.id}-SPIKE" ,args=[message], next_run_time=(datetime.now()+timedelta(seconds=30)))
+                except ConflictingIdError:
+                    pass
 
-        if not message.author.bot and not is_admins:
-            if SPIKE_COUNT < MAXED_SPIKE:
-                if  SPAM_MENTION >= 5:
-                    await message.channel.purge(limit=SPAM_MENTION, check=lambda m: (m.author == message.author and (datetime.now(timezone.utc) - m.created_at).seconds < 30))
-                    await self.Spike_check(message, SPIKE_COUNT, 1)
-                    await message.channel.reply(f"Don't spam mention.", delete_after=2)
-
-                elif SPAM >= 5:
-                    await message.channel.purge(limit=SPAM, check=lambda m: (m.author == message.author and (datetime.now(timezone.utc) - m.created_at).seconds < 30))
-                    await self.Spike_check(message, SPIKE_COUNT, 1)
-                    await message.channel.reply(f"Don't spam.", delete_after=2)
-
-
-                elif MASS_MENTION >= 2:
-                    await message.channel.purge(limit=MASS_MENTION, check=lambda m: (m.author == message.author and (datetime.now(timezone.utc) - m.created_at).seconds < 5))
-                    await self.Spike_check(message, SPIKE_COUNT, 3)
-                    await message.channel.reply(f"Do not mass mention again.", delete_after = 2)
-
-
-                elif CONTAIN_BANNED:
+            if profanity.contains_profanity(message.content):
                     await message.delete()
-                    await self.Spike_check(message, SPIKE_COUNT, 1)
-                    await message.channel.reply(f"Watch your words {message.author}.", delete_after = 2)
+                    await message.channel.send(f"Watch your word {message.author.mention}", delete_after=2)
+                    await self.write_file(message, "Spike", option=True)
+                    try:
+                        self.bot.scheduler.add_job(self.reset_spike, id=f"{message.author.id}-SPIKE" ,args=[message], next_run_time=(datetime.now()+timedelta(seconds=30)), replace_existing=True)
+                    except JobLookupError:
+                        pass
+            else:
+                with open(f"./cogs/message/{message.guild.id}.json") as f:
+                    user = load(f)
+
+                if len(user[str(message.author.id)]["Mention Message"]) >= 3:
+                    await self.write_file(message, "Mention", option=False)
+                    await message.channel.purge(limit=10, check=lambda m: (m.author == message.author), after=(datetime.now(timezone.utc) - timedelta(seconds=2)))
+                    await self.write_file(message, "Spike", option=True)
+                    await message.channel.send(f"Don't spam mention {message.author.mention}", delete_after=2)
 
 
-            elif SPIKE_COUNT >= MAXED_SPIKE:
-                self.SPIKE_DB.update_one({"_id": message.author.id}, {"$set": {"Spike": 0}})
-                member = get(message.guild.members, id=message.author.id)
-                await member.send(f"You have been muted in {message.guild}")
-                await self.auto_muted(message, '5h', "Auto mute", True)
+                elif len(user[str(message.author.id)]["Spam Message"]) >= 5:
+                    await self.write_file(message, "Spam", option=False)
+                    await message.channel.purge(limit=10, check=lambda m: (m.author == message.author), after=(datetime.now(timezone.utc) - timedelta(seconds=2)))
+                    await self.write_file(message, "Spike", option=True)
+                    await message.channel.send(f"A bit too fast there {message.author.mention}", delete_after=2)
 
+
+            if SPIKE >= 2 or MASS_MENTION >= 3:
+                await message.channel.purge(limit=10, check=lambda m: len(m.mentions) >= 5, after=(datetime.now(timezone.utc) - timedelta(seconds=10)))
+                await self.write_file(message, "All", option=False)
+                await self.auto_muted(message, "5h", "Auto Mute", auto=True)
+                
 
     @Cog.listener()
     async def on_ready(self):
         if not self.bot.ready:
-            self.bot.cogs_ready.ready_up("AutoMod")
+            self.bot.cogs_ready.ready_up("Automod")
 
 
 def setup(bot):
-    bot.add_cog(AutoMod(bot))
+    bot.add_cog(Automod(bot))
