@@ -32,20 +32,25 @@ class AutoVerify(Cog):
         return server["Default role"]
 
 
-    @command(name="display-roblox-name", description="Change all members name in server into their roblox name, if they already sign in")
-    @has_permissions(administrator=True)
-    async def display_roblox_name_command(self, ctx, targets :Greedy[Member] = None):
-        if targets is None:
-            for member in ctx.guild.members:
-                if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
-                    pass
-                else:
-                    user = self.ROBLOX_DB.find_one({"_id": member.id})
-                    userID = user["Roblox ID"]
-                    roblox = await self.roblox.get_user(userID)
-
-                    old_nickname = member.display_name if '|' not in member.display_name else member.display_name.split("|")[1]
-                    await member.edit(nick=f"{old_nickname.strip()} | [{roblox.name}]")
+    # @command(name="display-roblox-name", description="Change all members name in server into their roblox name, if they already sign in")
+    # @has_permissions(administrator=True)
+    # async def display_roblox_name_command(self, ctx, targets :Greedy[Member] = None):
+    #     if targets is None:
+    #         for member in ctx.guild.members:
+    #             if self.ROBLOX_DB.find_one({"_id": member.id}) is None:
+    #                 pass
+    #             else:
+    #                 user = self.ROBLOX_DB.find_one({"_id": member.id})
+    #                 userID = user["Roblox ID"]
+    #                 roblox = await self.roblox.get_user(userID)
+    #                 displayName = f"{member.name} [{roblox.name}]"
+                    
+    #                 if len(displayName) <= 32:
+    #                     pass
+    #                 else: 
+    #                     displayName = f'{roblox.name}'
+                        
+    #                 await member.edit(nick=displayName)
 
 
     @command(name="sign-in", description='Link your roblox account to your discord account.')
@@ -106,13 +111,11 @@ class AutoVerify(Cog):
 
                     if confirm_msg.content.lower() in ["yes", "y"]:
                         await member.send("Congratulation, you have been verified.")
-                        guild = self.bot.get_guild(member.guild.id)
-                        old_nickname = member.display_name if '|' not in member.display_name else member.display_name.split("|")[1]
-                        
+
                         if new:
-                            role = guild.get_role(default_role)
-                            await guild.get_member(member.id).edit(roles=[role], nick=f"{old_nickname.strip()} | [{user.name}]")
-                        
+                            role = member.guild.get_role(default_role)
+                            # await member.edit(roles=[role], nick=f"{member.name} [{user.name}]")
+
                         self.ROBLOX_DB.insert_one({"_id": member.id, "User Name": f"{member.name}#{member.discriminator}", "Roblox ID": user.id, "Joined at": member.joined_at.strftime("%b %d %Y")})
                         break
 
