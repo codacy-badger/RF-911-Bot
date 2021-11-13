@@ -62,6 +62,7 @@ class Admin(Cog):
         for _ in itertools.repeat(None, amount):
             await ctx.send(f"{text}", delete_after=120)
 
+
     @Cog.listener()
     async def on_ready(self):
         if not self.bot.ready:

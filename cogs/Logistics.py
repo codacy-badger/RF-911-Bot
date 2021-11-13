@@ -1,6 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from os import getenv
-from typing import Optional
 
 from aiohttp import ClientSession
 from nextcord import Embed
@@ -111,10 +110,12 @@ class Logistics(Cog):
             user = await self.roblox.get_user(user_name.id)
             url = get(
                 f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user_name.id}").json()
+            expired_time = datetime.now() + timedelta(days=5)
 
             embed = Embed(title=f"{user.name} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile", timestamp=datetime.utcnow())
-            embed.set_author(name=f"Resquested by {ctx.author}", icon_url=f'{ctx.author.display_avatar}')
+            embed.set_author(name=f"Host by {ctx.author}", icon_url=f'{ctx.author.display_avatar}')
             embed.set_image(url=url["data"][0]["imageUrl"])
+            embed.set_footer(text=f"Expired: {expired_time.strftime('%d-%m-%Y')}")
 
             fields = [("User Name: ", user.name, True),
                         ("Display Name: ", user.display_name, True),

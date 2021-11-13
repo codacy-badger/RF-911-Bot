@@ -142,7 +142,7 @@ class Bounty(Cog):
                     f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user_name.id}").json()
 
                 embed = Embed(title=f"{user.name.capitalize()} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
-                embed.set_author(name=f"Resquested by {ctx.author}", icon_url=f'{ctx.author.display_avatar}')
+                embed.set_author(name=f"Submitted by {ctx.author}", icon_url=f'{ctx.author.display_avatar}')
                 embed.set_image(url=url["data"][0]["imageUrl"])
 
                 fields = [("User Name: ", user.name, True),

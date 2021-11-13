@@ -118,7 +118,7 @@ class Fun(Cog):
                 await Bounty.get_roblox_info(ctx, user)
         else:
             if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
-                await ctx.send("Can't find roblox account linked with this user")
+                await ctx.send("You haven't sign in.")
             else:
                 user = self.ROBLOX_DB.find_one({"_id": ctx.author.id})
                 roblox = await self.roblox.get_user(user["Roblox ID"])
