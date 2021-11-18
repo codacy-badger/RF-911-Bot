@@ -24,7 +24,7 @@ class Log(Cog):
             if embed is not None:
                 await channel.send(embed=embed)
             elif file is not None:
-                with open("./cogs/message/message.txt", 'rb') as f:
+                with open("./cogs/message.txt", 'rb') as f:
                     await channel.send(file=File(f))
         else:
             pass
@@ -87,7 +87,7 @@ class Log(Cog):
 
     @Cog.listener()
     async def on_bulk_message_delete(self, messages) -> None:
-        with open("./cogs/message/message.txt", 'w') as f:
+        with open("./cogs/message.txt", 'w') as f:
             f.write(f"{len(messages)} messages deleted in #{messages[0].channel.name}:\n\n\n")
             for message in messages:
                 f.write(f"{message.author} (User ID: {message.author.id} Message ID: {message.id})\n{message.content}\n\n\n")
