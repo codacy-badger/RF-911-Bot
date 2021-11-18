@@ -100,7 +100,7 @@ class Logistics(Cog):
     
     @command(name='host-bounty', aliases=['hb'], description='Host bounty without submission.\nRequire `Logistics` Role')
     @has_role("Logistics")
-    async def host_bounty_command(self, ctx, userName: str, reason: str):
+    async def host_bounty_command(self, ctx, userName: str, *,reason: str):
         await del_user_msg(ctx)
 
         user_name = await self.roblox.get_user_by_username(userName)
