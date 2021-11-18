@@ -101,45 +101,45 @@ class Mod(Cog):
         return author_role,bot_role,target_role,owner_ids,author_ids,is_admins
     
 
-    async def lockdown_start(self, ctx, channel):
-        overwrite = PermissionOverwrite()
-        overwrite.send_messages = False
-        await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite, reason=f"Lockdown started by: {ctx.author.name}#{ctx.author.discriminator}")
+    # async def lockdown_start(self, ctx, channel):
+    #     overwrite = PermissionOverwrite()
+    #     overwrite.send_messages = False
+    #     await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite, reason=f"Lockdown started by: {ctx.author.name}#{ctx.author.discriminator}")
 
 
-    async def lockdown_end(self, ctx, channel):
-        overwrite = PermissionOverwrite()
-        overwrite.send_messages = None
-        await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite, reason=f"Lockdown ended by: {ctx.author.name}#{ctx.author.discriminator}")
+    # async def lockdown_end(self, ctx, channel):
+    #     overwrite = PermissionOverwrite()
+    #     overwrite.send_messages = None
+    #     await channel.set_permissions(ctx.guild.default_role, overwrite=overwrite, reason=f"Lockdown ended by: {ctx.author.name}#{ctx.author.discriminator}")
 
 
-    @command(name="set-lockdown-channel", aliases=["sldc"], description="Specify list of channel to lockdown. Required administrator permissions.")
-    @has_permissions(administrator=True)
-    async def add_lockdown_command(self, ctx, *, channel):
+    # @command(name="set-lockdown-channel", aliases=["sldc"], description="Specify list of channel to lockdown.\nRequired `Administrator`permissions.")
+    # @has_permissions(administrator=True)
+    # async def add_lockdown_command(self, ctx, *, channel):
 
-        lockdown_channel_ids = [int(channel_id.replace("<#", '').replace(">", '')) for channel_id in channel.split(',')]
-        self.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Lockdown channel": lockdown_channel_ids}})
+    #     lockdown_channel_ids = [int(channel_id.replace("<#", '').replace(">", '')) for channel_id in channel.split(',')]
+    #     self.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Lockdown channel": lockdown_channel_ids}})
 
-        await ctx.send(f"Added {channel} to lockdown channels", delete_after = self.DELETE_AFTER)
+    #     await ctx.send(f"Added {channel} to lockdown channels", delete_after = self.DELETE_AFTER)
 
 
-    @command(name="lockdown" , description="Lockdown channels. Required administrator permissions.")
-    @bot_has_permissions(administrator=True)
-    @has_permissions(administrator=True)
-    async def lockdown_command(self, ctx, option: Optional[str] = "start"):
-        lockdown_channel = self.GUILD_DB.find_one({"_id": ctx.guild.id})["Lockdown channel"]
+    # @command(name="lockdown" , description="Lockdown channels.\nRequired `Administrator`permissions.")
+    # @bot_has_permissions(administrator=True)
+    # @has_permissions(administrator=True)
+    # async def lockdown_command(self, ctx, option: Optional[str] = "start"):
+    #     lockdown_channel = self.GUILD_DB.find_one({"_id": ctx.guild.id})["Lockdown channel"]
 
-        if "end" in option.lower():
-            for channel_id in lockdown_channel:
-                channel = self.bot.get_channel(channel_id)
-                await self.lockdown_end(ctx, channel)
-            await ctx.send("Unlocked all selected channels")
+    #     if "end" in option.lower():
+    #         for channel_id in lockdown_channel:
+    #             channel = self.bot.get_channel(channel_id)
+    #             await self.lockdown_end(ctx, channel)
+    #         await ctx.send("Unlocked all selected channels")
 
-        elif "start" in option.lower():
-            for channel_id in lockdown_channel:
-                channel = self.bot.get_channel(channel_id)
-                await self.lockdown_start(ctx, channel)
-            await ctx.send("Locked down all selected channels")
+    #     elif "start" in option.lower():
+    #         for channel_id in lockdown_channel:
+    #             channel = self.bot.get_channel(channel_id)
+    #             await self.lockdown_start(ctx, channel)
+    #         await ctx.send("Locked down all selected channels")
 
 
     async def warn_members(self, ctx, targets, reason):
@@ -162,7 +162,7 @@ class Mod(Cog):
             await self.log_send(ctx, embed)
 
 
-    @command(name="warn", description="Warn the specified user. Required administrator permissions.")
+    @command(name="warn", description="Warn the specified user.\nRequired `Administrator`permissions.")
     @has_permissions(administrator=True)
     async def warn_command(self, ctx, targets: Greedy[Member], *, reason: Optional[str] = "No reason provided."):
         
@@ -172,7 +172,7 @@ class Mod(Cog):
             await self.warn_members(ctx, targets, reason)
 
 
-    @command(name="del-warn", aliases=['remove-warn'], description="Delete a warn for specified user. Required administrator permissions.")
+    @command(name="del-warn", aliases=['remove-warn'], description="Delete a warn for specified user.\nRequired `Administrator`permissions.")
     @has_permissions(administrator=True)
     async def del_warn_command(self, ctx, warnings_id):
         
@@ -191,7 +191,7 @@ class Mod(Cog):
                 await ctx.send(embed=embed)
 
     
-    @command(name="warnings", description="Warn the specified user. Required administrator permissions.")
+    @command(name="warnings", description="Warn the specified user.\nRequired `Administrator`permissions.")
     @has_permissions(administrator=True)
     async def warnings_command(self, ctx, targets: Greedy[Member]):
 
@@ -240,7 +240,7 @@ class Mod(Cog):
                 await self.response(ctx, target)
 
 
-    @command(name="kick", description="Kick the specified user. Required administrator permissions.")
+    @command(name="kick", description="Kick the specified user.\nRequired `Administrator`permissions.")
     @bot_has_permissions(kick_members=True)
     @has_permissions(administrator=True)
     async def kick_command(self, ctx, targets: Greedy[Member], *, reason: Optional[str] = "No reason provided."):
@@ -251,7 +251,7 @@ class Mod(Cog):
             await self.kick_members(ctx, targets, reason)
 
     
-    @command(name='banned',InvokeWithoutCommand=True, description='Show currently banned users list. Required administrator permissions.')
+    @command(name='banned',InvokeWithoutCommand=True, description='Show currently banned users list.\nRequired `Administrator`permissions.')
     @bot_has_permissions(manage_roles=True, ban_members=True)
     @has_permissions(administrator=True)
     async def _banned(self, ctx):
@@ -297,7 +297,7 @@ class Mod(Cog):
                 await self.response(ctx, target)
 
 
-    @command(name="ban", description="Ban the specified user. Required administrator permissions.")
+    @command(name="ban", description="Ban the specified user.\nRequired `Administrator`permissions.")
     @bot_has_permissions(ban_members=True)
     @has_permissions(administrator=True)
     async def ban_command(self, ctx, targets: Greedy[Member], *, reason: Optional[str] = "No reason provided."):
@@ -308,7 +308,7 @@ class Mod(Cog):
             await self.ban_members(ctx, targets, reason)
 
     
-    @command(name="unban", description="Unban the specified user. Required administrator permissions.")
+    @command(name="unban", description="Unban the specified user.\nRequired `Administrator`permissions.")
     @bot_has_permissions(ban_members=True)
     @has_permissions(administrator=True)
     async def unban_command(self, ctx, targets: Greedy[BannedUser], *, reason: Optional[str] = "No reason provided."):
@@ -381,7 +381,7 @@ class Mod(Cog):
         return unmutes
 
 
-    @command(name="mute", description="Mute the specified user. Required administrator permissions.")
+    @command(name="mute", description="Mute the specified user.\nRequired `Administrator`permissions.")
     @bot_has_permissions(manage_roles=True)
     @has_permissions(administrator=True)
     async def mute_command(self, ctx, targets: Greedy[Member], durations: Optional[str], *,
@@ -434,7 +434,7 @@ class Mod(Cog):
                 await ctx.channel.send("Sorry but this user haven't been muted")
     
 
-    @command(name="unmute", description="Unmute the specified user. Required administrator permissions.")
+    @command(name="unmute", description="Unmute the specified user.\nRequired `Administrator`permissions.")
     @bot_has_permissions(manage_roles=True)
     @has_permissions(administrator=True)
     async def unmute_command(self, ctx, targets: Greedy[Member], *, reason: Optional[str] = "No reason provided."):
@@ -444,7 +444,7 @@ class Mod(Cog):
             await self.unmute_members(ctx ,ctx.guild, targets, reason=reason)
 
 
-    @command(name="set-mute-role", aliases=['smr'], description='Set mute role. Required administrator permissions.')
+    @command(name="set-mute-role", aliases=['smr'], description='Set mute role.\nRequired `Administrator`permissions.')
     @has_permissions(administrator=True)
     async def _set_mute_role(self, ctx, roles: Greedy[Role]):
         await del_user_msg(ctx)
@@ -458,7 +458,7 @@ class Mod(Cog):
         await ctx.send(content=f"Mute role have been set/update to <@&{role_id}>", delete_after = self.DELETE_AFTER)
 
 
-    @command(name='set-log-channel', aliases=['slc'], description="Set log channel for logging. Required administrator permissions.")
+    @command(name='set-log-channel', aliases=['slc'], description="Set log channel for logging.\nRequired `Administrator`permissions.")
     @has_permissions(administrator=True)
     async def _logchannel(self, ctx, channel: Greedy[TextChannel]):
         await del_user_msg(ctx)
