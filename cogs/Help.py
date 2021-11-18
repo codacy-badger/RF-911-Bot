@@ -86,7 +86,7 @@ class Help(Cog):
         return guild["prefix"]
 
     
-    @command(name="help", description='Show help information')
+    @command(name="help", description='Show help information.')
     @has_permissions(administrator=True)
     async def help_command(self, ctx, cmds: Optional[str] = None):
         await del_user_msg(ctx)
@@ -99,7 +99,7 @@ class Help(Cog):
                 await ctx.send("That command does not exist.", delete_after=10)
         else:
             COGS = [self.bot.get_cog(cog) for cog in self.COGS if len(list(self.bot.get_cog(cog).walk_commands()))]
-            menu = CustomButtonMenuPages(source=HelpMenu(ctx, COGS, await self.get_guild_prefix(ctx)), timeout=120.0)
+            menu = CustomButtonMenuPages(source=HelpMenu(ctx, COGS, await self.get_guild_prefix(ctx)), timeout=120.0, ctx=ctx)
             await menu.start(ctx)
 
 

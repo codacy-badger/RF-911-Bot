@@ -44,7 +44,7 @@ class Embedder(Cog):
         self.bot = bot
 
 
-    @command(name="embedder", aliases=["embed"], description="Custem Embedder. Required Administrator permissions.")
+    @command(name="embedder", aliases=["embed"], description="Custem Embedder.\nRequired `Administrator` permissions.")
     @cooldown(3, 30, BucketType.user)
     @has_permissions(administrator=True)
     async def _msg_embedder(self, ctx, channels : Greedy[TextChannel]):

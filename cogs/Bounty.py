@@ -75,7 +75,7 @@ class Bounty(Cog):
             return CHANNEL
 
 
-    @command(name="set-hitlist-channel", aliases=["shc"], description="Set Hitlist Channel. Required administrator permissions.")
+    @command(name="set-hitlist-channel", aliases=["shc"], description="Set Hitlist Channel.\nRequired `administrator` permissions.")
     @has_permissions(administrator=True)
     async def set_hitlist_command(self, ctx, channels : Greedy[TextChannel]):
         await del_user_msg(ctx)
@@ -86,7 +86,7 @@ class Bounty(Cog):
         await ctx.send(f'Hitlist channel set/update to <#{channel_id}>', delete_after = 30)
 
 
-    @command(name="set-bounty-channel", aliases=["sbc"], description="Set Bounty Submissions Channel. Required administrator permissions.")
+    @command(name="set-bounty-channel", aliases=["sbc"], description="Set Bounty Submissions Channel.\nRequired `administrator` permissions.")
     @has_permissions(administrator=True)
     async def set_bounty_command(self, ctx, channels : Greedy[TextChannel]):
         await del_user_msg(ctx)
@@ -125,7 +125,7 @@ class Bounty(Cog):
         await msg.edit(content="Expired")
 
 
-    @command(name="submit-bounty", aliases=['sb'], description="Submit bounty to bounty submission channel. \nRequire `Bounty Hunter` role.")
+    @command(name="submit-bounty", aliases=['sb'], description="Submit bounty to bounty submission channel.\nRequire `Bounty Hunter` role.")
     @cooldown(rate=4, per=7200, type=BucketType.user)
     @has_role("Bounty Hunter")
     async def _bounty(self, ctx, target: str,  *, reason: str):

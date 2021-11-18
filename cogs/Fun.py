@@ -52,7 +52,7 @@ class Fun(Cog):
         self.ROBLOX_DB = self.DB['Roblox']
 
     
-    @command(name='ping', description='Show Bot Latency')
+    @command(name='ping', description='Show Bot Latency.')
     @cooldown(2, 10, BucketType.user)
     async def _ping(self, ctx):
         await del_user_msg(ctx)
@@ -96,7 +96,7 @@ class Fun(Cog):
         await ctx.send(embed=embed)
 
     
-    @command(name="roblox-info", aliases=['robloxinfo', 'rbinfo'], description="Get information about user or roblox")
+    @command(name="roblox-info", aliases=['robloxinfo', 'rbinfo'], description="Get information about user or roblox.")
     @cooldown(2, 10, BucketType.user)
     async def roblox_info_command(self, ctx, users: Optional[Member] = None, *, name: Optional[str] = None):
         await del_user_msg(ctx)
@@ -125,7 +125,7 @@ class Fun(Cog):
                 await self.get_roblox_info(ctx, roblox)
 
 
-    @command(name="userinfo", aliases=["memberinfo", "ui", "mi"], description="Get information about member")
+    @command(name="userinfo", aliases=["memberinfo", "ui", "mi"], description="Get information about member.")
     @cooldown(2, 10, BucketType.user)
     async def user_info(self, ctx, target: Optional[Member] = None):
         await del_user_msg(ctx)
@@ -150,7 +150,7 @@ class Fun(Cog):
         await ctx.send(embed=embed, delete_after= self.DELETE_AFTER)
 
 
-    @command(name="serverinfo", aliases=["guildinfo", "si", "gi"], description="Get information about server")
+    @command(name="serverinfo", aliases=["guildinfo", "si", "gi"], description="Get information about server.")
     @cooldown(2, 10, BucketType.user)
     async def server_info(self, ctx):
         await del_user_msg(ctx)
@@ -185,7 +185,7 @@ class Fun(Cog):
         await ctx.send(embed=embed, delete_after= self.DELETE_AFTER)
 
     
-    @command(name="av", aliases=['avatar'] ,description="Get member avatar")
+    @command(name="av", aliases=['avatar'] ,description="Get member avatar.")
     @cooldown(2, 10, BucketType.user)
     async def av_command(self, ctx, targets: Greedy[Member] = None):
         await del_user_msg(ctx)

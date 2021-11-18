@@ -79,7 +79,7 @@ class Logistics(Cog):
         return friend_ids
 
 
-    @command(name='check-friend', aliases=['cf'], description='Check user\'s friend list. Require `Logistics` Role')
+    @command(name='check-friend', aliases=['cf'], description='Check user\'s friend list.\nRequire `Logistics` Role')
     @has_role("Logistics")
     async def check_friend_command(self, ctx, userName: str):
         await del_user_msg(ctx)
@@ -91,14 +91,14 @@ class Logistics(Cog):
             friend_ids = await self.get_url(username.id)
             if len(friend_ids):
                 menu = CustomButtonMenuPages(source=FriendMenu(ctx, friend_ids, username),
-                             timeout=120.0)
+                             timeout=120.0, ctx=ctx)
                 await menu.start(ctx)
 
             else:
                 await ctx.send("This user has no friends")
 
     
-    @command(name='host-bounty', aliases=['hb'], description='Host bounty without submission. Require `Logistics` Role')
+    @command(name='host-bounty', aliases=['hb'], description='Host bounty without submission.\nRequire `Logistics` Role')
     @has_role("Logistics")
     async def host_bounty_command(self, ctx, userName: str, reason: str):
         await del_user_msg(ctx)

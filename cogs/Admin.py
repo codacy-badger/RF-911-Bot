@@ -21,7 +21,7 @@ class Admin(Cog):
         self.GUILD_DB = self.DB["Guild"]
 
 
-    @command(name="prefix", description="Change server prefix, require administrator permissions",)
+    @command(name="prefix", description="Change server prefix.\nRequire `Administrator` permissions",)
     @has_permissions(administrator=True)
     async def prefix(self, ctx, guild_prefix: Optional[str] = "rf-"):
         await del_user_msg(ctx)
@@ -35,7 +35,7 @@ class Admin(Cog):
         await ctx.guild.me.edit(nick=f"[{guild_prefix}] | {old_nickname.strip()}")
 
 
-    @command(name="clear", aliases=["purge"], description="Purge message, require manage messages permissions",)
+    @command(name="clear", aliases=["purge"], description="Purge message.\nRequire `Manage Messages` permissions",)
     @bot_has_permissions(manage_messages=True)
     @has_permissions(manage_messages=True)
     async def clear_messages(self, ctx, targets: Greedy[Member], limit: Optional[int] = 1, all: Optional[str] = None,):
@@ -53,7 +53,7 @@ class Admin(Cog):
             await ctx.send("The limit provided is not within acceptable bounds.")
 
 
-    @command(name="spam", description="Spam text, require administrator permissions")
+    @command(name="spam", description="Spam text.\nRequire `Ddministrator` permissions")
     @has_permissions(administrator=True)
     @cooldown(1, 10, BucketType.user)
     async def _spam(self, ctx, amount: int, *, text):

@@ -58,13 +58,13 @@ class AutoVerify(Cog):
         default_role = await self.get_default_role(ctx.guild)
 
         if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
-            await ctx.author.send(f'Hello {ctx.author.mention}, welcome to {ctx.guild.name}. \nPlease tell me your roblox account name', delete_after=self.DELETE_AFTER)
+            await ctx.author.send(f'Hello {ctx.author.mention}, welcome to {ctx.guild.name}.\nPlease tell me your roblox account name', delete_after=self.DELETE_AFTER)
             await self.check_username(ctx.author, default_role, new=False)
         else:
             await ctx.author.send("You're already verified")
 
 
-    @command(name="set-default-role", aliases=['sdr'], description='Set the default role for new member after join. Required administrator permissions.')
+    @command(name="set-default-role", aliases=['sdr'], description='Set the default role for new member after join.\nRequired `Administrator` permissions.')
     @has_permissions(administrator=True)
     async def set_default_role_command(self, ctx, roles: Greedy[Role]):
         await del_user_msg(ctx)
@@ -133,7 +133,6 @@ class AutoVerify(Cog):
         if self.ROBLOX_DB.find_one({"_id": member.id}) is None:
             await member.send(f'Hello {member.mention}, welcome to {member.guild.name}. \nBefore you can access any chat in server you need to verify yourself. \nPlease tell me your roblox account name', delete_after=self.DELETE_AFTER)
             await self.check_username(member, default_role)
-
         else:
             user = self.ROBLOX_DB.find_one({"_id": member.id})
             userID = user["Roblox ID"]

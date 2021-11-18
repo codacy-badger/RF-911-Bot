@@ -19,7 +19,7 @@ class Owner(Cog):
         self.DELETE_AFTER = 5
 
     
-    @command(name="toggle", description="Toggle on/off commands, owner only command", hidden=True)
+    @command(name="toggle", description="Toggle on/off commands.\n`Owner` only command", hidden=True)
     @is_owner()
     async def _toggle(self, ctx, command):
 
@@ -34,7 +34,7 @@ class Owner(Cog):
             await ctx.send(f'Command `{command.qualified_name}` has been {ternary}', delete_after= self.DELETE_AFTER)
 
 
-    @command(name="load", description='Load extensions, owner only command', hidden=True)
+    @command(name="load", description='Load extensions.\n`Owner` only command', hidden=True)
     @is_owner()
     async def _load(self, ctx, module: Optional[str]):
         await del_user_msg(ctx)
@@ -46,7 +46,7 @@ class Owner(Cog):
             raise ExtensionNotloaded
 
 
-    @command(name='unload', description='Unload extensions, owner only command', hidden=True)
+    @command(name='unload', description='Unload extensions.\n`Owner` only command', hidden=True)
     @is_owner()
     async def _unload(self, ctx, module: Optional[str]):
         await del_user_msg(ctx)
@@ -58,7 +58,7 @@ class Owner(Cog):
             raise ExtensionNotloaded
 
 
-    @command(name='reload', description='Reload extensions, owner only command', hidden=True)
+    @command(name='reload', description='Reload extensions.\n`Owner` only command', hidden=True)
     @is_owner()
     async def _reload(self, ctx, module: Optional[str] = "all"):
         await del_user_msg(ctx)
@@ -76,7 +76,7 @@ class Owner(Cog):
             raise ExtensionNotloaded
 
 
-    @command(name='cogs', description = 'List all extensions, owner only command', hidden=True)
+    @command(name='cogs', description = 'List all extensions.\n`Owner` only command', hidden=True)
     @is_owner()
     async def _list_all_extensions(self, ctx):
         await del_user_msg(ctx)
