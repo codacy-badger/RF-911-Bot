@@ -97,28 +97,6 @@ class Bounty(Cog):
         await ctx.send(f'Bounty Submissions channel set/update to <#{channel_id}>', delete_after = 30)
 
     
-    async def get_roblox_info(self, ctx, user):
-        thumbnail =  await self.roblox.thumbnails.get_user_avatars([int(user.id)])
-        thumbnail_url = thumbnail[0].image_url
-
-        embed = Embed(title="Roblox User Info", colour= 0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
-        embed.set_thumbnail(url=thumbnail_url)
-
-        description = "This user has no description." if user.description == '' else user.description.strip()
-
-        fields = [("User Name: ", user.name, True),
-                      ("Display Name: ", user.display_name, True),
-                      ("ID: ", user.id, False),
-                      ("Created at: ", str(user.created)[:10], True),
-                      ("Is banned: ", user.is_banned, True),
-                      ("Description: ", description, False)
-            ]
-
-        for name, value, inline in fields:
-            embed.add_field(name=name, value=value, inline=inline)
-
-        await ctx.send(embed=embed)
-        
     @staticmethod  
     async def del_bounty(msg):
         await msg.edit(content="Expired")
