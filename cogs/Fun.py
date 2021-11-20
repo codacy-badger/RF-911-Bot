@@ -96,7 +96,7 @@ class Fun(Cog):
 
 
     async def get_roblox_info(self, ctx, user):
-        thumbnail = self.roblox.thumbnails.get_user_avatars([user.id])
+        thumbnail = await self.roblox.thumbnails.get_user_avatars([user.id])
         thumbnail_url = thumbnail[0].image_url
 
         embed = Embed(title="Roblox User Info", colour= 0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
