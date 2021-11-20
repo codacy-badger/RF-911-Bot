@@ -44,7 +44,7 @@ class Embedder(Cog):
         self.bot = bot
 
 
-    @command(name="embedder", aliases=["embed"], description="Custem Embedder.\nRequired `Administrator` permissions.")
+    @command(name="embedder", aliases=["embed"], description="Custom Embedder.\nRequired `Administrator` permissions.")
     @cooldown(3, 30, BucketType.user)
     @has_permissions(administrator=True)
     async def _msg_embedder(self, ctx, channels : Greedy[TextChannel]):
@@ -55,7 +55,7 @@ class Embedder(Cog):
         await ctx.send("Title for your embed: ")
         title = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author and message.channel.id == ctx.channel.id)
 
-        await ctx.send("Desciption for your embed: ")
+        await ctx.send("Description for your embed: ")
         description = await self.bot.wait_for('message', check=lambda message: message.author == ctx.author and message.channel.id == ctx.channel.id)
 
         await ctx.send("Footer text for your embed: ")

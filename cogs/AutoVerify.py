@@ -1,5 +1,3 @@
-import random
-import string
 from asyncio import sleep
 from os import getenv
 

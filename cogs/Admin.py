@@ -53,7 +53,7 @@ class Admin(Cog):
             await ctx.send("The limit provided is not within acceptable bounds.")
 
 
-    @command(name="spam", description="Spam text.\nRequire `Ddministrator` permissions")
+    @command(name="spam", description="Spam text.\nRequire `Administrator` permissions")
     @has_permissions(administrator=True)
     @cooldown(1, 10, BucketType.user)
     async def _spam(self, ctx, amount: int, *, text):

@@ -97,7 +97,7 @@ class Logistics(Cog):
             else:
                 await ctx.send("This user has no friends")
 
-    
+
     @command(name='host-bounty', aliases=['hb'], description='Host bounty without submission.\nRequire `Logistics` Role')
     @has_role("Logistics")
     async def host_bounty_command(self, ctx, userName: str, *,reason: str):
