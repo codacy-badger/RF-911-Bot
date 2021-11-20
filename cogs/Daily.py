@@ -66,7 +66,7 @@ class Daily(Cog):
         if self.mission_objective is None: # -> None means bot just start -> no daily added
             return False
 
-        if self.mission_objective == mission_objective_wiki: # -> Daily havent change
+        if self.mission_objective == mission_objective_wiki: # -> Daily haven't change
             return True
         return False # -> if data is different from wiki
 
@@ -79,9 +79,9 @@ class Daily(Cog):
                 get_url = await response.text()
                 soup = BeautifulSoup(get_url, "lxml")
 
-                daily_board = soup.find(string=compile("The daily challenge")).parent.parent # Find daily main parent contain all needed childrens
+                daily_board = soup.find(string=compile("daily challenge")).parent.parent.parent # Find daily main parent contain all needed children
                 daily_mission = daily_board.find("th", colspan="3").text.strip() # Find daily mission
-
+            
         return daily_board, daily_mission
 
 
