@@ -14,7 +14,6 @@ from pymongo import MongoClient
 from roblox import Client
 
 from . import del_user_msg
-from .Bounty import Bounty
 
 DND_EMOJI = "<:dnd:903269917854400532>"
 IDLE_EMOJI = "<:9231idle:903269440911724564>"
@@ -131,21 +130,21 @@ class Fun(Cog):
                 user = self.ROBLOX_DB.find_one({"_id": users.id})
                 userID = user["Roblox ID"]
                 roblox = await self.roblox.get_user(userID)
-                await Bounty.get_roblox_info(ctx, roblox)
+                await self.get_roblox_info(ctx, roblox)
         elif name is not None:
             user_name = await self.roblox.get_user_by_username(name)
             if user_name == None:
                 await ctx.send("No user found with that username.")
             else:
                 user = await self.roblox.get_user(user_name.id)
-                await Bounty.get_roblox_info(ctx, user)
+                await self.get_roblox_info(ctx, user)
         else:
             if self.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
                 await ctx.send("You haven't sign in.")
             else:
                 user = self.ROBLOX_DB.find_one({"_id": ctx.author.id})
                 roblox = await self.roblox.get_user(user["Roblox ID"])
-                await Bounty.get_roblox_info(ctx, roblox)
+                await self.get_roblox_info(ctx, roblox)
 
 
     @command(name="userinfo", aliases=["memberinfo", "ui", "mi"], description="Get information about member.")
