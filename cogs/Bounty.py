@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from os import getenv
-from typing import Optional
 
 from nextcord import ButtonStyle, Embed, Interaction, Member, TextChannel, ui
 from nextcord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
@@ -8,7 +7,6 @@ from nextcord.ext.commands import (BucketType, Cog, Greedy, command, cooldown,
 from nextcord.ext.commands.errors import MissingRole
 from nextcord.ext.menus import ButtonMenu, Menu
 from pymongo import MongoClient
-from requests import get
 from roblox import Client
 
 from . import del_user_msg
@@ -25,7 +23,7 @@ class ButtonConfirm(ButtonMenu):
         return await channel.send(embed=self.text, view=self)
 
     @ui.button(emoji='<:green_check_mark:882362735969579088>', style=ButtonStyle.success)
-    async def do_confirm(self, button, interaction):
+    async def do_confirm(self, button, interaction: Interaction):
         if "Logistics" in [role.name for role in interaction.user.roles]:
             self.result = True
             self.host = interaction.user
@@ -34,7 +32,7 @@ class ButtonConfirm(ButtonMenu):
             await interaction.response.send_message("You don't have permission to do this action.", ephemeral=True)
 
     @ui.button(emoji='<:cross_mark:906819264462348318>', style=ButtonStyle.danger)
-    async def do_deny(self, button, interaction):
+    async def do_deny(self, button, interaction: Interaction):
         if "Logistics" in [role.name for role in interaction.user.roles]:
             self.result = False
             self.stop()
@@ -115,12 +113,12 @@ class Bounty(Cog):
                 await ctx.send("No user found with that username.")
             else:
                 user = await self.roblox.get_user(user_name.id)
-                url = get(
-                    f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user_name.id}").json()
+                thumbnail = await self.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
+                thumbnail_url = thumbnail[0].image_url
 
                 embed = Embed(title=f"{user.name.capitalize()} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
                 embed.set_author(name=f"Submitted by {ctx.author}", icon_url=f'{ctx.author.display_avatar}')
-                embed.set_image(url=url["data"][0]["imageUrl"])
+                embed.set_image(url=thumbnail_url)
 
                 fields = [("User Name: ", user.name, True),
                             ("Display Name: ", user.display_name, True),

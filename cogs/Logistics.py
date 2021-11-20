@@ -7,7 +7,6 @@ from nextcord.ext.commands import Cog, command, has_role
 from nextcord.ext.commands.errors import MissingRole
 from nextcord.ext.menus import ListPageSource
 from pymongo import MongoClient
-from requests import get
 from roblox import Client
 
 from . import CustomButtonMenuPages, del_user_msg
@@ -17,6 +16,7 @@ class FriendMenu(ListPageSource):
     def __init__(self, ctx, data, userName):
         self.ctx = ctx
         self.userName = userName
+        self.roblox = Client()
 
         super().__init__(data, per_page=18)
 
@@ -25,14 +25,15 @@ class FriendMenu(ListPageSource):
         current_page = menu.current_page + 1
         max_page = round(len(self.entries) / self.per_page) + 1
 
-        url = get(f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={self.userName.id}").json()
+        thumbnail = await self.roblox.thumbnails.get_user_avatars([self.userName.id], size="720x720")
+        thumbnail_url = thumbnail[0].image_url
 
         embed = Embed(title=f"{self.userName.name.capitalize()}'s friends list", 
                       colour=0x2f3136, 
                       description=f"User Name: {self.userName.name}\nDisplay Name: {self.userName.display_name}\nID: {self.userName.id}"
                       )
         embed.set_footer(text=f"Page {current_page}/{max_page}.")
-        embed.set_thumbnail(url=url["data"][0]["imageUrl"])
+        embed.set_thumbnail(url=thumbnail_url)
 
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=True)
@@ -108,13 +109,14 @@ class Logistics(Cog):
             await ctx.send("No user found with that username.")
         else:
             user = await self.roblox.get_user(user_name.id)
-            url = get(
-                f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user_name.id}").json()
+            thumbnail = await self.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
+            thumbnail_url = thumbnail[0].image_url
+            
             expired_time = datetime.now() + timedelta(days=5)
 
             embed = Embed(title=f"{user.name} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile", timestamp=datetime.utcnow())
             embed.set_author(name=f"Host by {ctx.author}", icon_url=f'{ctx.author.display_avatar}')
-            embed.set_image(url=url["data"][0]["imageUrl"])
+            embed.set_image(url=thumbnail_url)
             embed.set_footer(text=f"Expired: {expired_time.strftime('%d-%m-%Y')}")
 
             fields = [("User Name: ", user.name, True),
