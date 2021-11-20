@@ -97,13 +97,12 @@ class Bounty(Cog):
         await ctx.send(f'Bounty Submissions channel set/update to <#{channel_id}>', delete_after = 30)
 
     
-    @staticmethod
-    async def get_roblox_info(ctx, user):
-        url = get(
-                f"https://thumbnails.roblox.com/v1/users/avatar?format=Png&isCircular=false&size=420x420&userIds={user.id}").json()
+    async def get_roblox_info(self, ctx, user):
+        thumbnail =  await self.roblox.thumbnails.get_user_avatars([int(user.id)])
+        thumbnail_url = thumbnail[0].image_url
 
         embed = Embed(title="Roblox User Info", colour= 0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
-        embed.set_thumbnail(url=url["data"][0]["imageUrl"])
+        embed.set_thumbnail(url=thumbnail_url)
 
         description = "This user has no description." if user.description == '' else user.description.strip()
 

@@ -122,7 +122,7 @@ class Fun(Cog):
             else:
                 user = self.ROBLOX_DB.find_one({"_id": ctx.author.id})
                 roblox = await self.roblox.get_user(user["Roblox ID"])
-                await self.get_roblox_info(ctx, roblox)
+                await Bounty.get_roblox_info(ctx, roblox)
 
 
     @command(name="userinfo", aliases=["memberinfo", "ui", "mi"], description="Get information about member.")
