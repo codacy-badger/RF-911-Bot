@@ -42,7 +42,7 @@ class Invite(ui.View):
 class Fun(Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.DELETE_AFTER = 180
+        self.DELETE_AFTER = 300
         self.roblox = Client()
         
         self.MONGO_CLIENT =  MongoClient(getenv("DATABASE"))
@@ -177,29 +177,28 @@ class Fun(Cog):
     async def server_info(self, ctx):
         await del_user_msg(ctx)
 
-        embed = Embed(title="Server information", colour=0x2f3136)
+        embed = Embed(title=f"{ctx.guild.name}", colour=0x2f3136)
         embed.set_thumbnail(url=ctx.guild.icon)
+        created_at = ctx.guild.created_at.strftime("%d/%m/%Y")
+        embed.set_footer(f"ID : {ctx.guild.id} | Server Created: {created_at}")
 
         statuses = [len(list(filter(lambda m: str(m.status) == "online", ctx.guild.members))),
                     len(list(filter(lambda m: str(m.status) == "idle", ctx.guild.members))),
                     len(list(filter(lambda m: str(m.status) == "dnd", ctx.guild.members))),
                     len(list(filter(lambda m: str(m.status) == "offline", ctx.guild.members)))]
 
-        fields = [("ID", ctx.guild.id, True),
-                  ("Owner", ctx.guild.owner, True),
-                  ("Region", ctx.guild.region, True),
-                  ("Created at", ctx.guild.created_at.strftime("%d/%m/%Y %H:%M:%S"), True),
-                  ("Members", len(ctx.guild.members), True),
-                  ("Humans", len(list(filter(lambda m: not m.bot, ctx.guild.members))), True),
-                  ("Bots", len(list(filter(lambda m: m.bot, ctx.guild.members))), True),
-                  ("Banned members", len(await ctx.guild.bans()), True),
-                  ("Statuses", f"{ONLINE_EMOJI} {statuses[0]} {IDLE_EMOJI} {statuses[1]} {DND_EMOJI} {statuses[2]} {OFFLINE_EMOJI} {statuses[3]}", True),
-                  ("Text channels", len(ctx.guild.text_channels), True),
-                  ("Voice channels", len(ctx.guild.voice_channels), True),
+        human = len(list(filter(lambda m: not m.bot, ctx.guild.members)))
+        bot = len(list(filter(lambda m: m.bot, ctx.guild.members)))
+        
+        text_channels = len(ctx.guild.text_channels)
+        voice_channels = len(ctx.guild.voice_channels)
+
+        fields = [("Owner", ctx.guild.owner, True),
+                  (f"Members: `{len(ctx.guild.members)}`", f"Human: `{human}`\nBot: `{bot}`")
                   ("Categories", len(ctx.guild.categories), True),
+                  (f"Channels: {text_channels + voice_channels}", f"Text channels: {text_channels}\nVoice channels: {voice_channels}"),
                   ("Roles", len(ctx.guild.roles), True),
-                  ("Invites", len(await ctx.guild.invites()), True),
-                  ("\u200b", "\u200b", True)]
+                  ("Statuses", f"{ONLINE_EMOJI} {statuses[0]} {IDLE_EMOJI} {statuses[1]} {DND_EMOJI} {statuses[2]} {OFFLINE_EMOJI} {statuses[3]}", False),]
 
         for name, value, inline in fields:
             embed.add_field(name=name, value=value, inline=inline)
