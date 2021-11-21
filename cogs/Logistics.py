@@ -26,7 +26,7 @@ class FriendMenu(ListPageSource):
         max_page = round(len(self.entries) / self.per_page) + 1
 
         thumbnail = await self.roblox.thumbnails.get_user_avatars([self.userName.id], size="720x720")
-        thumbnail_url = thumbnail[0].image_url
+        thumbnail_url = thumbnail[0].image_url if thumbnail[0].image_url is not None else Embed.Empty
 
         embed = Embed(title=f"{self.userName.name.capitalize()}'s friends list", 
                       colour=0x2f3136, 
@@ -39,6 +39,7 @@ class FriendMenu(ListPageSource):
             embed.add_field(name=name, value=value, inline=True)
 
         return embed
+
 
     async def format_page(self, menu, entries):
         fields = [(f"Username: \n{name}", f"Display name: \n{displayName} \nID: {userID}", False) for name, displayName, userID in entries]
@@ -110,7 +111,8 @@ class Logistics(Cog):
         else:
             user = await self.roblox.get_user(user_name.id)
             thumbnail = await self.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
-            thumbnail_url = thumbnail[0].image_url
+            thumbnail_url = thumbnail[0].image_url if thumbnail[0].image_url is not None else Embed.Empty
+
             
             expired_time = datetime.now() + timedelta(days=5)
 
