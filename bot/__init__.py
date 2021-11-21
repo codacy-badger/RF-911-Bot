@@ -81,7 +81,7 @@ class Bot(BotBase):
         print("------- Running setup ... ------")
         self.setup()
         self.TOKEN = getenv("TOKEN")
-        print("------ Running RF 911 ... ------")
+        print("------- Running RF ... ---------")
         super().run(self.TOKEN, reconnect=True)
 
 
@@ -148,11 +148,11 @@ class Bot(BotBase):
 
 
     async def on_connect(self):
-        print("------- RF 911 Connected -------")
+        print("------ RF Connected -----------")
 
 
     async def on_disconnect(self):
-        print("------ RF 911 Disconnected -----")
+        print("------ RF Disconnected ---------")
 
 
     async def on_error(self, err, *args, **kwargs):
@@ -220,12 +220,12 @@ class Bot(BotBase):
             print(f"Ping: {round(self.latency* 1000)} ms")
             print("--------------------------------")
 
-            await self.change_presence(activity=Activity(type=ActivityType.watching, name="Raid Force 911"))
+            await self.change_presence(activity=Activity(type=ActivityType.watching, name="Raid Force"))
             self.scheduler.start()
             self.error_channel = self.get_channel(906829491756732456)
 
         else:
-            print("------ RF 911 Reconnected ------")
+            print("------ RF Reconnected ---------")
 
 
     async def on_message(self, message):

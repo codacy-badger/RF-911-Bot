@@ -3,8 +3,6 @@ from nextcord.ext.commands import Cog, Context
 from nextcord.ext.menus import ButtonMenuPages, MenuPaginationButton
 from nextcord.ext.menus.utils import _cast_emoji
 
-from typing import List
-
 from . import *
 
 

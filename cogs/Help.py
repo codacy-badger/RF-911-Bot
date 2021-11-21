@@ -35,7 +35,7 @@ class HelpMenu(ListPageSource):
         offset = (menu.current_page*self.per_page) + 1
         len_data = len(self.entries)
 
-        embed = Embed(title="RF 911 Help Menu", colour=0x2f3136, description=f"{cog_name} \n[] is optional arguments.\n<> is required arguments.")
+        embed = Embed(title="Raid Force Help Menu", colour=0x2f3136, description=f"{cog_name} \n[] is optional arguments.\n<> is required arguments.")
         embed.set_thumbnail(url=self.ctx.guild.me.display_avatar)
         embed.set_footer(text=f"{offset:,} of {len_data:,} modules.")
 
