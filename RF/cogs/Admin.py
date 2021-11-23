@@ -45,7 +45,7 @@ class Admin(Cog):
                 limit -= 100
             else:
                 total += len(await ctx.channel.purge(limit=limit, after=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) - timedelta(days=14), check=_check,))
-            await ctx.send(f"Deleted {len(total):,} messages.", delete_after=1.5)
+            await ctx.send(f"Deleted {total:,} messages.", delete_after=1.5)
 
 
     @command(name="spam", description="Spam text.\nRequire `Administrator` permissions")
