@@ -18,4 +18,5 @@ lxml
 pytz
 better_profanity
 apscheduler
+uvloop
 git+git://github.com/rbx-libdev/ro.py.git
