@@ -36,7 +36,7 @@ class Admin(Cog):
     @has_permissions(manage_messages=True)
     async def clear_messages(self, ctx:Context, targets: Greedy[Member], limit: Optional[int] = 1):
         def _check(message):
-            return not len(targets) or message.author in targets
+            return (not len(targets) or message.author in targets) and message.id != ctx.message.id
 
         with ctx.channel.typing():
             total = 0
@@ -46,6 +46,7 @@ class Admin(Cog):
             else:
                 total += len(await ctx.channel.purge(limit=limit, after=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) - timedelta(days=14), check=_check,))
             await ctx.send(f"Deleted {total:,} messages.", delete_after=1.5)
+            await ctx.message.delete()
 
 
     @command(name="spam", description="Spam text.\nRequire `Administrator` permissions")
