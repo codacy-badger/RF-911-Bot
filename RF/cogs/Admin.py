@@ -41,10 +41,10 @@ class Admin(Cog):
         with ctx.channel.typing():
             total = 0
             while limit > 100:
-                total += await ctx.channel.purge(limit=100, after=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) - timedelta(days=14), check=_check,)
+                total += len(await ctx.channel.purge(limit=100, after=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) - timedelta(days=14), check=_check,))
                 limit -= 100
             else:
-                total += await ctx.channel.purge(limit=limit, after=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) - timedelta(days=14), check=_check,)
+                total += len(await ctx.channel.purge(limit=limit, after=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) - timedelta(days=14), check=_check,))
             await ctx.send(f"Deleted {len(total):,} messages.", delete_after=1.5)
 
 
