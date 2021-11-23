@@ -5,7 +5,7 @@ from pathlib import Path
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
-from nextcord import (Activity, ActivityType, AuditLogAction, DMChannel, Embed,
+from nextcord import (Activity, ActivityType, DMChannel, Embed,
                       Intents)
 from nextcord.errors import Forbidden
 from nextcord.ext.commands import BadArgument
@@ -85,14 +85,6 @@ class RF(BotBase):
 
 
     async def on_guild_join(self, guild):
-        def check(event):
-            return event.target.id == self.user.id
-
-        bot_entry = await guild.audit_logs(action=AuditLogAction.bot_add).find(check)
-        await bot_entry.user.send(
-            f'Hello {bot_entry.user.mention}, Thanks for inviting me! \nDefault prefix is "rf-" \nPlease use following commands to complete the setup: set-default-role, set-bounty-channel, set-lockdown-channel, set-log-channel, set-mute-role'
-        )
-
         self.GUILD_DB.insert_one({"_id": guild.id, 
                                   "server name": guild.name,
                                   "prefix": "rf-",
