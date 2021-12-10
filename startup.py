@@ -1,10 +1,10 @@
-from uvloop import install
-from RF.bot import *
+from uvloop import install as uvloopInstaller
+from RF.bot import bot
 
-VERSION = "0.8.0"
+VERSION = "0.8.5"
 
 def main():
-    install()
+    uvloopInstaller()
     bot.run(VERSION)
 
 if __name__ == '__main__':
