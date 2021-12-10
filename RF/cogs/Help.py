@@ -17,9 +17,7 @@ async def syntax(command) -> str:
         if key not in ("self", "ctx"):
             params.append(f"[{key}]" if "None" in str(value) else f"<{key}>")
 
-    params = " ".join(params)
-
-    return params
+    return " ".join(params)
 
 
 class HelpMenu(ListPageSource):
@@ -64,8 +62,8 @@ class Help(Cog):
         self.bot = bot
         self.bot.help_command = None
         self.COGS = [p.stem for p in Path(".").glob("./RF/cogs/*.py")]
-        
-    
+
+
     async def cog_help(self, ctx: Context, cog: Cog) -> None:
         embed = Embed(title=f"Help with {cog.qualified_name}", color=0x2f3136)
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
@@ -101,7 +99,7 @@ class Help(Cog):
 
         return guild["prefix"]
 
-    
+
     @command(name="help", description='Show help information.', hidden=True)
     @has_permissions(administrator=True)
     async def help_command(self, ctx: Context, cmds: Optional[str] = None) -> None:
