@@ -83,7 +83,7 @@ class Owner(Cog):
         await del_user_msg(ctx)
 
         embed = Embed(title="List of extensions: ", colour= 0x2f3136, description="\n".join(self._COGS))
-        await ctx.send(embed=embed, delete_after = self.DELETE_AFTER)
+        await ctx.send(embed=embed)
 
 
     @Cog.listener()
