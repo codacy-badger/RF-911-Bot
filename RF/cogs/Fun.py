@@ -1,5 +1,5 @@
-import time
 from datetime import datetime, timedelta
+from json import load
 from platform import python_version
 from time import time
 from typing import Optional
@@ -7,15 +7,13 @@ from typing import Optional
 from nextcord import ButtonStyle, Embed, Member
 from nextcord import __version__ as nextcord_version
 from nextcord import ui
-from nextcord.ext.commands import (BucketType, Cog, Context, command,
-                                   cooldown)
+from nextcord.ext.commands import BucketType, Cog, Context, command, cooldown
 from psutil import Process, virtual_memory
 from pytz import timezone
-from roblox import Client
+from roblox.users import User
 
 from ..bot import RF
 from . import del_user_msg
-
 
 DND_EMOJI = "<:dnd:903269917854400532>"
 IDLE_EMOJI = "<:idle:903269440911724564> "
@@ -44,11 +42,35 @@ class Fun(Cog):
     def __init__(self, bot: RF) -> None:
         self.bot = bot
         self.DELETE_AFTER = 300
-        self.roblox = Client()
         
 
+    @command(name="snipe", description="Show latest deleted message.")
+    @cooldown(1, 10, BucketType.user)
+    async def _snipe(self, ctx: Context, user: Optional[Member]):
+        with open(f"./RF/cogs/MessageLog/{ctx.guild.id}-sniper.json") as f:
+            data = load(f)
+
+            try:
+                if user is not None:
+                    message = data[str(user.id)]
+                    embed = Embed(colour=0x2F3136, timestamp=datetime.utcnow(),
+                                description=message,).set_author(name=user, icon_url=user.display_avatar)
+                else:
+                    message = data[str(ctx.guild.id)]
+                    userName, messageContent = list(data[str(ctx.guild.id)])[0], data[str(ctx.guild.id)][str(list(data[str(ctx.guild.id)])[0])]
+                    
+                    user = ctx.guild.get_member(int(userName))
+                    
+                    embed = Embed(colour=0x2F3136, timestamp=datetime.utcnow(),
+                                description=messageContent,).set_author(name=user, icon_url=user.display_avatar)
+            except KeyError:
+                embed = Embed(colour=0x2F3136, timestamp=datetime.utcnow(), description="There is nothing to snipe.").set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
+
+            await ctx.send(embed=embed)
+
+
     @command(name="ping", description="Show Bot Latency.")
-    @cooldown(2, 10, BucketType.user)
+    @cooldown(1, 5, BucketType.user)
     async def _ping(self, ctx: Context) -> None:
         await del_user_msg(ctx)
 
@@ -64,8 +86,8 @@ class Fun(Cog):
 
 
     @command(name="stats", description="Show bot stats.")
-    @cooldown(2, 10, BucketType.user)
-    async def show_bot_stats(self, ctx: Context) -> None:
+    @cooldown(2, 30, BucketType.user)
+    async def _show_bot_stats(self, ctx: Context) -> None:
         await del_user_msg(ctx)
 
         embed = Embed(title="RF Stats", colour=0x2F3136, timestamp=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")),)
@@ -91,11 +113,12 @@ class Fun(Cog):
         await ctx.send(embed=embed)
 
 
-    async def get_roblox_info(self, ctx: Context, user: str) -> None:
-        thumbnail = await self.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
+    async def getRobloxInfo(self, ctx: Context, user: User, isLinked: bool = False, Linked: Member = None) -> None:
+        thumbnail = await self.bot.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
         thumbnail_url = (thumbnail[0].image_url if thumbnail[0].image_url is not None else Embed.Empty)
 
-        embed = Embed(title="Roblox User Info", colour=0x2F3136, url=f"https://www.roblox.com/users/{user.id}/profile",)
+        embed = Embed(title="Roblox User Info" if not isLinked else f"{Linked}'s info",
+                      colour=0x2F3136, url=f"https://www.roblox.com/users/{user.id}/profile",)
         embed.set_thumbnail(url=thumbnail_url)
 
         description = ("This user has no description." if user.description == "" else user.description.strip())
@@ -103,8 +126,7 @@ class Fun(Cog):
         fields = [("Username: ", user.name, True),
                   ("Display Name: ", user.display_name, True),
                   ("ID: ", user.id, False),
-                  ("Created at: ", str(user.created)[:10], True),
-                  ("Deleted: ", user.is_banned, True),
+                  ("Created at: ", user.created.strftime("%a, %d %b, %Y \n%I:%M %p"), True),
                   ("Description: ", description, False),]
 
         for name, value, inline in fields:
@@ -114,36 +136,38 @@ class Fun(Cog):
 
 
     @command(name="robloxinfo", aliases=["rbinfo"], description="Get information about user or roblox.",)
-    @cooldown(2, 10, BucketType.user)
+    @cooldown(3, 30, BucketType.user)
     async def roblox_info_command(self, ctx: Context, member: Optional[Member] = None, *, robloxName: Optional[str] = None) -> None:
         await del_user_msg(ctx)
 
         if member is not None:
-            if self.bot.ROBLOX_DB.find_one({"_id": member.id}) is None:
+            user = self.bot.ROBLOX_DB.find_one({"_id": member.id})
+            if user is None:
                 await ctx.send("Can't find roblox account linked with this user")
             else:
-                user = self.bot.ROBLOX_DB.find_one({"_id": member.id})
                 userID = user["Roblox ID"]
-                roblox = await self.roblox.get_user(userID)
-                await self.get_roblox_info(ctx, roblox)
+                roblox = await self.bot.roblox.get_user(userID)
+                await self.getRobloxInfo(ctx, roblox, True, member)
+
         elif robloxName is not None:
-            user_name = await self.roblox.get_user_by_username(robloxName)
+            user_name = await self.bot.roblox.get_user_by_username(robloxName)
             if user_name == None:
                 await ctx.send("No user found with that username.")
             else:
-                user = await self.roblox.get_user(user_name.id)
-                await self.get_roblox_info(ctx, user)
+                user = await self.bot.roblox.get_user(user_name.id)
+                await self.getRobloxInfo(ctx, user)
+
         else:
-            if self.bot.ROBLOX_DB.find_one({"_id": ctx.author.id}) is None:
+            user = self.bot.ROBLOX_DB.find_one({"_id": ctx.author.id})
+            if user is None:
                 await ctx.send("You haven't sign in.")
             else:
-                user = self.bot.ROBLOX_DB.find_one({"_id": ctx.author.id})
-                roblox = await self.roblox.get_user(user["Roblox ID"])
-                await self.get_roblox_info(ctx, roblox)
+                roblox = await self.bot.roblox.get_user(user["Roblox ID"])
+                await self.getRobloxInfo(ctx, roblox, True, ctx.author)
 
 
     @command(name="userinfo", aliases=["memberinfo", "ui", "mi"], description="Get information about member.",)
-    @cooldown(2, 10, BucketType.user)
+    @cooldown(3, 30, BucketType.user)
     async def user_info(self, ctx: Context, member: Optional[Member] = None) -> None:
         await del_user_msg(ctx)
 
@@ -158,8 +182,6 @@ class Fun(Cog):
 
         isOwner = ctx.guild.owner.id == member.id
         isAdmin = member.guild_permissions.administrator
-        
-        print(member.guild_permissions.value)
         
         fields = [("Created", member.created_at.strftime("%a, %d %b, %Y \n%I:%M %p"), True),
                   ("Joined", member.joined_at.strftime("%a, %d %b, %Y \n%I:%M %p"), True),
@@ -177,7 +199,7 @@ class Fun(Cog):
 
 
     @command(name="serverinfo", aliases=["guildinfo", "si", "gi"], description="Get information about server.",)
-    @cooldown(2, 10, BucketType.user)
+    @cooldown(3, 30, BucketType.user)
     async def server_info(self, ctx) -> None:
         await del_user_msg(ctx)
 
@@ -226,7 +248,7 @@ class Fun(Cog):
         await ctx.send(embed=embed, delete_after=self.DELETE_AFTER)
 
 
-    @command(name="info", description="Get Bot information")
+    @command(name="info", description="Get Bot information.")
     @cooldown(2, 10, BucketType.user)
     async def info_command(self, ctx: Context) -> None:
         await del_user_msg(ctx)
