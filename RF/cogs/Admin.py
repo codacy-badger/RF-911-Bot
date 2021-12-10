@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from itertools import repeat
 from typing import Optional
 
-from nextcord import Webhook
-from nextcord.ext.commands import (BucketType, Cog, Context,
+from nextcord import Webhook, TextChannel
+from nextcord.ext.commands import (BucketType, Cog, Context, 
                                    bot_has_permissions, command, cooldown,
                                    has_permissions)
 from pytz import timezone
@@ -80,8 +80,7 @@ class Admin(Cog):
         webhook = await channel.create_webhook(name="Raid Force", reason=f"This channel have been set to log channel by {ctx.author}", avatar=avatar)
         self.bot.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Log channel": {"ID": webhook.id, "Token": webhook.token}}})
 
-        await ctx.send(f'Log channel has been added/updated {channel.mention}',delete_after = self.DELETE_AFTER)
-
+        await ctx.send(f'Log channel has been added/updated {channel.mention}',delete_after = 5)
 
 
     @Cog.listener()
