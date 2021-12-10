@@ -69,6 +69,19 @@ class Admin(Cog):
         for _ in repeat(None, amount):
             msg = await channel.send(content=text, wait=True)
             await msg.delete(delay=60.0)
+            
+    
+    @command(name='set-log-channel', aliases=['slc'], description="Set log channel for logging.\nRequired `Administrator`permissions.")
+    @has_permissions(administrator=True)
+    async def _logchannel(self, ctx: Context, channel: TextChannel) -> None:
+        await del_user_msg(ctx)
+        
+        avatar = await ctx.guild.me.avatar.read()
+        webhook = await channel.create_webhook(name="Raid Force", reason=f"This channel have been set to log channel by {ctx.author}", avatar=avatar)
+        self.bot.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Log channel": {"ID": webhook.id, "Token": webhook.token}}})
+
+        await ctx.send(f'Log channel has been added/updated {channel.mention}',delete_after = self.DELETE_AFTER)
+
 
 
     @Cog.listener()
