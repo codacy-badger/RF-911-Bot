@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from itertools import repeat
 from typing import Optional
 
-from nextcord import Member
-from nextcord.ext.commands import (BucketType, Cog, Context, Greedy,
+from nextcord import Webhook
+from nextcord.ext.commands import (BucketType, Cog, Context,
                                    bot_has_permissions, command, cooldown,
                                    has_permissions)
 from pytz import timezone
@@ -34,29 +34,41 @@ class Admin(Cog):
     @command(name="purge", aliases=["clear"], description="Purge message.\nRequire `Manage Messages` permissions",)
     @bot_has_permissions(manage_messages=True)
     @has_permissions(manage_messages=True)
-    async def clear_messages(self, ctx:Context, targets: Greedy[Member], limit: Optional[int] = 1):
+    async def clear_messages(self, ctx: Context, limit: Optional[int] = 1):
         def _check(message):
-            return (not len(targets) or message.author in targets) and message.id != ctx.message.id
+            return message.id != ctx.message.id
 
         with ctx.channel.typing():
             total = 0
             while limit > 100:
-                total += len(await ctx.channel.purge(limit=100, after=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) - timedelta(days=14), check=_check,))
+                total += len(await ctx.channel.purge(limit=101, after=datetime.utcnow() - timedelta(days=14), check=_check,))
                 limit -= 100
             else:
-                total += len(await ctx.channel.purge(limit=limit, after=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) - timedelta(days=14), check=_check,))
-            await ctx.send(f"Deleted {total:,} messages.", delete_after=1.5)
-            await ctx.message.delete()
+                total += len(await ctx.channel.purge(limit=limit+1, after=datetime.utcnow() - timedelta(days=14), check=_check,))
+
+        await ctx.send(f"Deleted {total} messages.", delete_after=1)
+        await ctx.message.delete(delay=1.0)
 
 
     @command(name="spam", description="Spam text.\nRequire `Administrator` permissions")
     @has_permissions(administrator=True)
     @cooldown(1, 10, BucketType.user)
-    async def _spam(self, ctx:Context, amount:int, *, text:str):
+    async def _spam(self, ctx: Context, amount: int, *, text: str):
         await del_user_msg(ctx)
 
+        async def delWebhook(webhook: Webhook):
+            await webhook.delete(reason="Spam finished.")
+
+        webhook = await ctx.channel.create_webhook(name=ctx.author.display_name, avatar= await ctx.author.avatar.read(), reason=f"Spam started by {ctx.author}" )
+
+        channel = Webhook.from_url(url=webhook.url, session=self.bot.session)
+
+        self.bot.scheduler.add_job(delWebhook, id=f"{ctx.author.id}-Spam", args=[webhook], replace_existing=True,
+                                         next_run_time=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) + timedelta(seconds=60*amount/2),)
+
         for _ in repeat(None, amount):
-            await ctx.send(f"{text}", delete_after=60)
+            msg = await channel.send(content=text, wait=True)
+            await msg.delete(delay=60.0)
 
 
     @Cog.listener()
