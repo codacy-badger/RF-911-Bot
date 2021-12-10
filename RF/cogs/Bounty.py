@@ -48,7 +48,7 @@ class Bounty(Cog):
         self.bot = bot
 
 
-    async def checkChannel(self, ctx: Context) -> bool:
+    def checkChannel(self, ctx: Context) -> bool:
         BOUNTY_SUBMISSIONS = self.bot.GUILD_DB.find_one({"_id": ctx.guild.id})['Bounty submission']
 
         if ctx.channel.id != BOUNTY_SUBMISSIONS and BOUNTY_SUBMISSIONS is not None:
@@ -83,10 +83,7 @@ class Bounty(Cog):
     async def set_bounty_command(self, ctx: Context, channel : TextChannel) -> None:
         await del_user_msg(ctx)
 
-        avatar = await ctx.guild.me.avatar.read()
-        webhook = await channel.create_webhook(name="Hitlist", reason=f"This channel have been set to bounty submission channel by {ctx.author}", avatar=avatar)
-        self.bot.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Bounty submission": {"ID": webhook.id, "Token": webhook.token}}})
-
+        self.bot.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Bounty submission": channel.id}})
         await ctx.send(f'Bounty Submissions channel set/update to {channel.mention}', delete_after = 5)
 
 
@@ -103,11 +100,11 @@ class Bounty(Cog):
 
 
     @command(name="submit-bounty", aliases=['sb'], description="Submit bounty to bounty submission channel.\nRequire `Bounty Hunter` role.")
-    @cooldown(rate=4, per=7200, type=BucketType.user)
+    @cooldown(rate=2, per=7200, type=BucketType.user)
     @has_role("Bounty Hunter")
     async def _bounty(self, ctx: Context, target: str,  *, reason: str) -> None:
-        CHECK_CHANNEL = await self.checkChannel(ctx)
-        await del_user_msg(ctx) 
+        CHECK_CHANNEL = self.checkChannel(ctx)
+        await del_user_msg(ctx)
 
         if CHECK_CHANNEL:
             user_name = await self.bot.roblox.get_user_by_username(target)
@@ -117,7 +114,7 @@ class Bounty(Cog):
                 user = await self.bot.roblox.get_user(user_name.id)
                 thumbnail = await self.bot.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
                 thumbnail_url = thumbnail[0].image_url if thumbnail[0].image_url is not None else Embed.Empty
-                expireTime = datetime.now() + timedelta(seconds=60)
+                expireTime = datetime.now() + timedelta(days=7)
 
                 embed = Embed(title=f"{user.name} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
                 embed.set_image(url=thumbnail_url)
