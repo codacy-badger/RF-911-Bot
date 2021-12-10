@@ -3,10 +3,11 @@ from datetime import datetime
 from os import getenv
 from pathlib import Path
 
+from aiohttp.client import ClientSession
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from dotenv import load_dotenv
-from nextcord import (Activity, ActivityType, DMChannel, Embed,
-                      Intents)
+from nextcord import (Activity, ActivityType, DMChannel, Embed, Guild, Intents,
+                      Message)
 from nextcord.errors import Forbidden
 from nextcord.ext.commands import BadArgument
 from nextcord.ext.commands import Bot as BotBase
@@ -15,6 +16,8 @@ from nextcord.ext.commands import (CommandNotFound, CommandOnCooldown, Context,
 from nextcord.ext.commands.errors import MissingPermissions
 from pymongo import MongoClient
 from pytz import timezone
+
+from roblox import Client
 
 OWNER_IDS = [188903265931362304]
 COGS = [p.stem for p in Path(".").glob("./RF/cogs/*.py")]
@@ -52,7 +55,9 @@ class RF(BotBase):
         self.SCHEDULER = self.DB['Scheduler']
         
         self.scheduler = AsyncIOScheduler(timezone=timezone("Asia/Ho_Chi_Minh"),)
-        
+        self.session = ClientSession()
+        self.roblox = Client()
+
         super().__init__(command_prefix=self.prefix,
                          case_insensitive=True,
                          owner_ids=set(OWNER_IDS),
@@ -84,7 +89,7 @@ class RF(BotBase):
         super().run(self.TOKEN, reconnect=True)
 
 
-    async def on_guild_join(self, guild):
+    async def on_guild_join(self, guild: Guild):
         self.GUILD_DB.insert_one({"_id": guild.id, 
                                   "server name": guild.name,
                                   "prefix": "rf-",
@@ -95,14 +100,14 @@ class RF(BotBase):
                                   "Default role": None,})
 
 
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(self, guild: Guild):
         self.GUILD_DB.delete_one({"_id": guild.id})
         self.WARN_DB.delete_many({"Guild ID": guild.id})
         self.CASE_DB.delete_many({"Guild ID": guild.id})
         self.MUTE_DB.delete_many({"Guild ID": guild.id})
 
 
-    async def process_commands(self, message):
+    async def process_commands(self, message: Message):
         ctx = await self.get_context(message, cls=Context)
         self.banlist_user = [
             user["_id"]
@@ -117,10 +122,7 @@ class RF(BotBase):
                 await ctx.reply("Commands are disabled in this channel.", delete_after=2)
 
             elif not self.ready:
-                await ctx.send(
-                    "I'm not ready to receive commands. Please wait a few seconds.",
-                    delete_after=5,
-                )
+                await ctx.send("I'm not ready to receive commands. Please wait a few seconds.", delete_after=5,)
 
             else:
                 await self.invoke(ctx)
@@ -137,9 +139,7 @@ class RF(BotBase):
     async def on_error(self, err, *args, **kwargs):
         if err == "on_command_error":
             await args[0].send(f"Something went wrong: {args[1]}", delete_after=3)
-            embed = Embed(
-                title="Errors occurred", colour=0x2F3136, timestamp=datetime.now(tz=timezone("Asia/Ho_Chi_Minh"))
-            )
+            embed = Embed(title="Errors occurred", colour=0x2F3136, timestamp=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")))
 
             fields = [
                 ("In Server: ", args[0].guild, False),
@@ -150,24 +150,23 @@ class RF(BotBase):
 
             [embed.add_field(name=name, value=value, inline=inline) for name, value, inline in fields]
 
-            await self.error_channel.send(embed=embed)
+            await self.errorChannel.send(embed=embed)
         raise
 
 
-    async def on_command_error(self, ctx, exc):
+    async def on_command_error(self, ctx: Context, exc):
         if any([isinstance(exc, error) for error in IGNORE_EXCEPTIONS]):
             pass
 
         elif isinstance(exc, MissingRequiredArgument):
-            await ctx.send(
-                "One or more required arguments are missing.", delete_after=3
-            )
+            params = " ".join([(f"[{key}]" if "None" in str(value) else f"<{key}>") for key, value in ctx.command.params.items() if key not in ("self", "ctx")])
 
-        elif isinstance(exc, CommandOnCooldown):
-            await ctx.send(
-                f"That command is on {str(exc.cooldown.type).split('.')[-1]} cooldown. Try again in {exc.retry_after:,.2f} secs.",
-                delete_after=3,
-            )
+            aliases = f' | {" | ".join(ctx.command.aliases)}' if ctx.command.aliases != [] else ''
+            commandHelp = f"{ctx.prefix}{ctx.command.qualified_name} {aliases} {params}"
+
+            embed = Embed(title="Missing required arguments.", color=0x2f3136)
+            embed.add_field(name=commandHelp, value=ctx.command.description if ctx.command.description != '' else "This command have no description", inline=True)
+            await ctx.send(embed=embed, delete_after=10)
 
         elif isinstance(exc, MissingPermissions):
             await ctx.send(exc)
@@ -178,7 +177,6 @@ class RF(BotBase):
 
             else:
                 raise exc.original
-
         else:
             raise exc
 
@@ -191,14 +189,13 @@ class RF(BotBase):
             self.ready = True
             print("--------- Logged in as ---------")
             print(f"Name: {self.user}")
-            print(f"ID: {self.user.id}")
             print(f"Version: {self.VERSION}")
             print(f"Ping: {round(self.latency* 1000)} ms")
             print("--------------------------------")
 
             await self.change_presence(activity=Activity(type=ActivityType.watching, name="Raid Force"))
             self.scheduler.start()
-            self.error_channel = self.get_channel(906829491756732456)
+            self.errorChannel = self.get_channel(906829491756732456)
 
         else:
             print("--------- RF Reconnected -------")
