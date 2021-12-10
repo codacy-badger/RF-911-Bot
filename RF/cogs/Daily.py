@@ -2,7 +2,6 @@ from datetime import datetime
 from re import compile
 from typing import Union
 
-from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from nextcord import Embed, TextChannel
@@ -22,7 +21,7 @@ class Daily(Cog):
         # Daily tasks
         self.mission_objective = None
         self.first_msg = True
-        self.dailyChallenges.start()
+        # self.dailyChallenges.start()
 
 
     @loop(minutes=2)
@@ -64,16 +63,14 @@ class Daily(Cog):
         return False # -> if data is different from wiki
 
 
-    @staticmethod
-    async def getDailyBoard() -> Tag:
+    async def getDailyBoard(self) -> Tag:
         wiki_url = 'https://entry-point.fandom.com/wiki/Entry_Point_Wiki'
-        async with ClientSession() as session:
-            async with session.get(wiki_url) as response:
-                get_url = await response.text()
-                soup = BeautifulSoup(get_url, "lxml")
+        async with self.bot.session.get(wiki_url) as response:
+            get_url = await response.text()
+            soup = BeautifulSoup(get_url, "lxml")
 
-                daily_board = soup.find(string=compile("daily challenge")).parent.parent.parent # Find daily main parent contain all needed children
-                daily_mission = daily_board.find("th", colspan="3").text.strip() # Find daily mission
+            daily_board = soup.find(string=compile("daily challenge")).parent.parent.parent # Find daily main parent contain all needed children
+            daily_mission = daily_board.find("th", colspan="3").text.strip() # Find daily mission
             
         return daily_board, daily_mission
 
@@ -113,7 +110,7 @@ class Daily(Cog):
         return today.strftime("%d-%m-%Y")
 
 
-    async def embedMessage(self) -> Union[datetime, Embed, list]:
+    async def embedMessage(self) -> Union[datetime, Embed, str]:
         # Get daily data        
         daily_board, daily_mission = await self.getDailyBoard()
         objective_list = await self.getObjective(daily_board)
