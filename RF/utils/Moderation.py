@@ -2,10 +2,10 @@ from datetime import datetime, timedelta
 from os import getenv
 from typing import Optional
 from uuid import uuid4
+from aiohttp.client import ClientSession
 
 from apscheduler.jobstores.base import JobLookupError
-from dotenv import load_dotenv
-from nextcord import Embed, Member, Role, TextChannel, User
+from nextcord import Embed, File, Guild, Member, Message, Webhook, Role
 from nextcord.ext.commands import Context, Greedy
 from nextcord.ext.commands.errors import CommandError
 from nextcord.utils import find, get
@@ -25,19 +25,27 @@ class Moderation():
         self.DELETE_AFTER = 6
 
 
-    async def log_send(self, ctx: Context, embed: Embed) -> None:
-        Guild = self.bot.GUILD_DB.find_one({"_id": ctx.guild.id})
-        log_channel_id = Guild["Log channel"] if Guild is not None else None
+    async def logSend(self, guild: Guild, embed: Optional[Embed] = None, file: Optional[File] = None) -> None:
+        webhook = (self.bot.GUILD_DB.find_one({"_id": guild.id})["Log channel"] if self.bot.GUILD_DB.find_one({"_id": guild.id}) is not None else None)
 
-        if log_channel_id is not None:
-            await self.bot.get_channel(log_channel_id).send(embed=embed)
+        if webhook is not None:
+            ID, Token = webhook["ID"], webhook["Token"]
+            channel = Webhook.from_url(url=f"https://discord.com/api/webhooks/{ID}/{Token}", session=self.bot.session)
+            if embed is not None:
+                await channel.send(embed=embed)
+
+            elif file is not None:
+                with open(f"./RF/cogs/MessageLog/{guild.id}.txt", "rb") as f:
+                    await channel.send(file=File(f))
+        else:
+            return
 
 
     async def get_mute_role(self, ctx: Context) -> Role:
         guild_id = self.bot.GUILD_DB.find_one({"_id": ctx.guild.id})
 
         if guild_id["Mute role"] is None:
-            await ctx.send("No mute role specified!", delete_after=self.DELETE_AFTER)
+            raise ResponseError(message="No mute role specified!")
         else:
             return (ctx.guild.get_role(guild_id["Mute role"]))
 
@@ -47,11 +55,11 @@ class Moderation():
         timeConverter = {"s":1, "m":60, "h":3600,"d":86400}
         for index, item in enumerate(durations):
             try:
-                int(item)
+                number, times = int(item), "s"
             except ValueError:
                 number, times = durations[:index] , durations[index]
                 break
-            
+                
         return (int(number)) * timeConverter[times]
 
 
@@ -67,11 +75,11 @@ class Moderation():
         if (bot > mem) and (isOwner or (author > mem and not isAdmin)):
             return True
         elif bot < mem:
-            raise ResponseError(message="Insufficient permissions for me to perform that task.")
+            raise ResponseError(message="I do not have permission to do that.")
         elif author < mem:
-            raise ResponseError(message="Insufficient permissions to perform that task.")
+            raise ResponseError(message="You do not have permission to do that.")
         elif isAdmin:
-            raise ResponseError(message="Administrator is immune to this task.")
+            raise ResponseError(message="You do not have permission to mute Administrator.")
 
 
     async def kick_members(self, ctx: Context, member: Member, reason:str = "No") -> None:
@@ -90,7 +98,7 @@ class Moderation():
                 embed.add_field(name=name, value=value, inline=inline)
 
             await ctx.send(embed=embed, delete_after=self.DELETE_AFTER)
-            await self.log_send(ctx, embed)
+            await self.logSend(ctx, embed)
 
 
     async def mute_members(self, ctx: Context, member: Member, durations: int, reason: str, auto: bool = False) -> None:
@@ -103,17 +111,16 @@ class Moderation():
                 await member.edit(roles=[muteRole], reason=f"Muted by {ctx.author}, Reason: {reason}")
 
                 if durations is not None:
-                    duration = await self.time_converter(durations)
-                    expireTime = datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) + timedelta(seconds=duration)
-                    timeLeft = ((f"{duration:,.0f} second(s)") if duration < 60 
-                                else (f"{duration / 60:,.0f} minute(s)") if duration < 3600 
-                                else (f"{duration / 3600:,.0f} hour(s)") if duration < 86400
-                                else (f"{duration / 86400:,.0f} day(s)"))
+                    times = await self.time_converter(durations)
+                    expireTime = datetime.now(tz=timezone("Asia/Ho_Chi_Minh")) + timedelta(seconds=times)
+                    timeLeft = ((f"{times:,.0f} second(s)") if times < 60 
+                                else (f"{times / 60:,.1f} minute(s)") if times < 3600 
+                                else (f"{times / 3600:,.1f} hour(s)") if times < 86400
+                                else (f"{times / 86400:,.1f} day(s)"))
 
                     self.bot.scheduler.add_job(self.unmutes_members, id=f"{member.id}-Mute", kwargs={'ctx':ctx, 'member':member, 'isBot':True}, next_run_time=expireTime)
-                    self.bot.SCHEDULER.insert_one({"_id": f"{member.id}-Mute", 
-                                          "Expired": (datetime.now() + timedelta(seconds=duration)).strftime('%d-%m-%Y-%H-%M-%S'),
-                                          "Guild ID": ctx.guild.id,})
+                    self.bot.SCHEDULER.insert_one({"_id": f"{member.id}-Mute", "Guild ID": ctx.guild.id, 
+                                                   "Expired": (datetime.now() + timedelta(seconds=times)).strftime('%d-%m-%Y-%H-%M-%S'),})
                 else:
                     timeLeft = "Indefinite"
 
@@ -123,14 +130,14 @@ class Moderation():
                 fields = [("Member: ", member.mention, True),
                           ("Moderator: ", ctx.author.mention if not auto else ctx.guild.me.mention, True),
                           ("Duration: ",timeLeft, False),
-                          ("Expire: ", f"<t:{str(expireTime.timestamp()).split('.')[0]}:R>" if duration is not None else timeLeft, True),
+                          ("Expire: ", f"<t:{str(expireTime.timestamp()).split('.')[0]}:R>" if durations is not None else timeLeft, True),
                           ("Reason: ", reason, False),]
 
                 for name, value, inline in fields:
                     embed.add_field(name=name, value=value, inline=inline)
 
                 await ctx.send(embed=embed, delete_after=self.DELETE_AFTER)
-                await self.log_send(ctx, embed)
+                await self.logSend(ctx, embed)
         else:
             await ctx.send("This user have already been mute.", delete_after=self.DELETE_AFTER)
 
@@ -140,9 +147,9 @@ class Moderation():
         if muteRole in member.roles:
             userRolesID:list =  self.bot.MUTE_DB.find_one({"Member ID": member.id, "Guild ID": ctx.guild.id})["Roles"]
             userRoles:list = [ctx.guild.get_role(id) for id in userRolesID]
-            
+
             await member.edit(roles=userRoles, reason=f"Unmutes by {ctx.author}, Reason: {reason}")
-            
+
             self.bot.MUTE_DB.delete_one({"Member ID": member.id, "Guild ID": ctx.guild.id})
             self.bot.SCHEDULER.delete_one({"_id": f"{member.id}-Mute", "Guild ID": ctx.guild.id})
 
@@ -164,7 +171,7 @@ class Moderation():
             if not isBot:
                 await ctx.send(embed=embed, delete_after=self.DELETE_AFTER)
 
-            await self.log_send(ctx, embed)
+            await self.logSend(ctx, embed)
         else:
             await ctx.send("This user haven't been muted.", delete_after=self.DELETE_AFTER)
 
@@ -183,7 +190,7 @@ class Moderation():
             embed.add_field(name=name, value=value, inline=inline)
 
         await ctx.send(embed=embed, delete_after=self.DELETE_AFTER)
-        await self.log_send(ctx, embed)
+        await self.logSend(ctx, embed)
 
 
     async def ban_members(self, ctx: Context, member: Member, reason: str) -> None:
@@ -201,7 +208,7 @@ class Moderation():
                 embed.add_field(name=name, value=value, inline=inline)
 
             await ctx.send(embed=embed, delete_after=self.DELETE_AFTER)
-            await self.log_send(ctx, embed)
+            await self.logSend(ctx, embed)
 
 
     async def warnings(self, ctx: Context, member: Member) -> None:
@@ -248,4 +255,4 @@ class Moderation():
             embed.add_field(name=name, value=value, inline=inline)
 
         await ctx.send(embed=embed, delete_after=self.DELETE_AFTER)
-        await self.log_send(ctx, embed)
+        await self.logSend(ctx, embed)
