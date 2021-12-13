@@ -9,7 +9,7 @@ from nextcord.ext.commands import (BucketType, Cog, Context,
 from pytz import timezone
 
 from ..bot import RF
-from . import del_user_msg
+from . import delUserMsg
 
 
 class Admin(Cog):
@@ -20,7 +20,7 @@ class Admin(Cog):
     @command(name="prefix", description="Change server prefix.\nRequire `Administrator` permissions",)
     @has_permissions(administrator=True)
     async def prefix(self, ctx:Context, prefix: Optional[str] = "rf-"):
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         # Find guild and set prefix for that guild
         self.bot.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"prefix": prefix}})
@@ -54,7 +54,7 @@ class Admin(Cog):
     @has_permissions(administrator=True)
     @cooldown(1, 10, BucketType.user)
     async def _spam(self, ctx: Context, amount: int, *, text: str):
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         async def delWebhook(webhook: Webhook):
             await webhook.delete(reason="Spam finished.")
@@ -74,7 +74,7 @@ class Admin(Cog):
     @command(name='set-log-channel', aliases=['slc'], description="Set log channel for logging.\nRequired `Administrator`permissions.")
     @has_permissions(administrator=True)
     async def _logchannel(self, ctx: Context, channel: TextChannel) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
         
         avatar = await ctx.guild.me.avatar.read()
         webhook = await channel.create_webhook(name="Raid Force", reason=f"This channel have been set to log channel by {ctx.author}", avatar=avatar)

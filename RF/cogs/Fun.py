@@ -13,7 +13,7 @@ from pytz import timezone
 from roblox.users import User
 
 from ..bot import RF
-from . import del_user_msg
+from . import delUserMsg
 
 DND_EMOJI = "<:dnd:903269917854400532>"
 IDLE_EMOJI = "<:idle:903269440911724564> "
@@ -72,7 +72,7 @@ class Fun(Cog):
     @command(name="ping", description="Show Bot Latency.")
     @cooldown(1, 5, BucketType.user)
     async def _ping(self, ctx: Context) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         start = time()
         embed = Embed(title="Pong!", colour=0x2F3136, timestamp=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")),)
@@ -88,7 +88,7 @@ class Fun(Cog):
     @command(name="stats", description="Show bot stats.")
     @cooldown(2, 30, BucketType.user)
     async def _show_bot_stats(self, ctx: Context) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         embed = Embed(title="RF Stats", colour=0x2F3136, timestamp=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")),)
         embed.set_author(name=ctx.guild.me, icon_url=ctx.guild.me.display_avatar)
@@ -114,7 +114,7 @@ class Fun(Cog):
 
 
     async def getRobloxInfo(self, ctx: Context, user: User, isLinked: bool = False, Linked: Member = None) -> None:
-        thumbnail = await self.bot.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
+        thumbnail = await self.bot.roblox.thumbnails.get_user_avatar_thumbnails([user.id], size="720x720")
         thumbnail_url = (thumbnail[0].image_url if thumbnail[0].image_url is not None else Embed.Empty)
 
         embed = Embed(title="Roblox User Info" if not isLinked else f"{Linked}'s info",
@@ -138,7 +138,7 @@ class Fun(Cog):
     @command(name="robloxinfo", aliases=["rbinfo"], description="Get information about user or roblox.",)
     @cooldown(3, 30, BucketType.user)
     async def roblox_info_command(self, ctx: Context, member: Optional[Member] = None, *, robloxName: Optional[str] = None) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         if member is not None:
             user = self.bot.ROBLOX_DB.find_one({"_id": member.id})
@@ -169,7 +169,7 @@ class Fun(Cog):
     @command(name="userinfo", aliases=["memberinfo", "ui", "mi"], description="Get information about member.",)
     @cooldown(3, 30, BucketType.user)
     async def user_info(self, ctx: Context, member: Optional[Member] = None) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         member = member or ctx.author
         embed = Embed(title="User information", description=member.mention, colour=0x2F3136, timestamp=datetime.now(tz=timezone("Asia/Ho_Chi_Minh")),)
@@ -201,7 +201,7 @@ class Fun(Cog):
     @command(name="serverinfo", aliases=["guildinfo", "si", "gi"], description="Get information about server.",)
     @cooldown(3, 30, BucketType.user)
     async def server_info(self, ctx) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         embed = Embed(title=f"{ctx.guild.name}", colour=0x2F3136)
         embed.set_thumbnail(url=ctx.guild.icon)
@@ -238,7 +238,7 @@ class Fun(Cog):
     @command(name="av", aliases=["avatar"], description="Get member avatar.")
     @cooldown(2, 10, BucketType.user)
     async def av_command(self, ctx: Context, member: Member = None) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
         member = member or ctx.author
 
         embed = Embed(title="Avatar", color=0x2F3136)
@@ -251,7 +251,7 @@ class Fun(Cog):
     @command(name="info", description="Get Bot information.")
     @cooldown(2, 10, BucketType.user)
     async def info_command(self, ctx: Context) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         owner = self.bot.get_user(CREATOR_ID)
         created_at = self.bot.user.created_at.strftime("%d/%m/%Y")

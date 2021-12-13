@@ -8,7 +8,7 @@ from nextcord.ext.commands import (BucketType, Cog, Context, command, cooldown,
 from nextcord.ext.menus import ButtonMenu, Menu
 
 from ..bot import RF
-from . import del_user_msg
+from . import delUserMsg
 
 
 class ButtonConfirm(ButtonMenu):
@@ -63,13 +63,17 @@ class Bounty(Cog):
 
         channel = Webhook.from_url(url=f"https://discord.com/api/webhooks/{ID}/{Token}", session=self.bot.session)
         message = await channel.send(username=f"{host.name}", avatar_url=host.display_avatar, embed=embed, wait=True)
+
+        embed.set_footer(text=f"ID: {message.id}")
+
+        await message.edit(embed=embed)
         return message
 
 
     @command(name="set-hitlist-channel", aliases=["shc"], description="Set Hitlist Channel.\nRequired `administrator` permissions.")
     @has_permissions(administrator=True)
     async def set_hitlist_command(self, ctx: Context, channel : TextChannel) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         avatar = await ctx.guild.me.avatar.read()
         webhook = await channel.create_webhook(name="Hitlist", reason=f"This channel have been set to hitlist channel by {ctx.author}", avatar=avatar)
@@ -81,7 +85,7 @@ class Bounty(Cog):
     @command(name="set-bounty-channel", aliases=["sbc"], description="Set Bounty Submissions Channel.\nRequired `administrator` permissions.")
     @has_permissions(administrator=True)
     async def set_bounty_command(self, ctx: Context, channel : TextChannel) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         self.bot.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Bounty submission": channel.id}})
         await ctx.send(f'Bounty Submissions channel set/update to {channel.mention}', delete_after = 5)
@@ -104,7 +108,6 @@ class Bounty(Cog):
     @has_role("Bounty Hunter")
     async def _bounty(self, ctx: Context, target: str,  *, reason: str) -> None:
         CHECK_CHANNEL = self.checkChannel(ctx)
-        await del_user_msg(ctx)
 
         if CHECK_CHANNEL:
             user_name = await self.bot.roblox.get_user_by_username(target)
@@ -112,12 +115,11 @@ class Bounty(Cog):
                 await ctx.send("No user found with that username.")
             else:
                 user = await self.bot.roblox.get_user(user_name.id)
-                thumbnail = await self.bot.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
+                thumbnail = await self.bot.roblox.thumbnails.get_user_avatar_thumbnails([user.id], size="720x720")
                 thumbnail_url = thumbnail[0].image_url if thumbnail[0].image_url is not None else Embed.Empty
                 expireTime = datetime.now() + timedelta(days=7)
 
-                embed = Embed(title=f"{user.name} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile")
-                embed.set_image(url=thumbnail_url)
+                embed = Embed(title=f"{user.name} profiles", color=0x2f3136, url=f"https://www.roblox.com/users/{user.id}/profile").set_thumbnail(url=thumbnail_url)
 
                 fields = [("User Name: ", user.name, True),
                             ("Display Name: ", user.display_name, True),

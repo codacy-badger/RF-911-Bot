@@ -11,7 +11,7 @@ from nextcord.ext.tasks import loop
 from pytz import timezone
 
 from ..bot import RF
-from . import del_user_msg
+from . import delUserMsg
 
 
 class Daily(Cog):
@@ -147,7 +147,7 @@ class Daily(Cog):
     @command(name="set-daily-channel", aliases=["sdc"], description="Set Auto Daily Challenges Channel.\nRequired `Administrator` permissions")
     @has_permissions(administrator=True)
     async def setDailyCommand(self, ctx: Context, channels: TextChannel) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         self.bot.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Daily channel": channels.id}})
         await ctx.send(f'Daily channel set to {channels.mention}', delete_after = 30)
@@ -156,7 +156,7 @@ class Daily(Cog):
     @command(name="daily", description="Show Entry Point Daily Challenges.")
     @cooldown(3, 60, BucketType.user)
     async def _daily_command(self, ctx: Context) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         msg = await ctx.send("Loading... <a:discord:873909804630933575>")
         _, wiki_embed, _ = await self.embedMessage()

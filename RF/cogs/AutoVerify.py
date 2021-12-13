@@ -4,7 +4,7 @@ from nextcord.ext.commands import (Cog, Context, Greedy, command,
 from nextcord.utils import get
 
 from ..bot import RF
-from . import del_user_msg
+from . import delUserMsg
 
 
 class AutoVerify(Cog):
@@ -33,7 +33,7 @@ class AutoVerify(Cog):
     @command(name="set-default-role", aliases=['sdr'], description='Set the default role for new member after join.\nRequired `Administrator` permissions.')
     @has_permissions(administrator=True)
     async def set_default_role_command(self, ctx: Context, roles: Greedy[Role]):
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         role_id = (role.id for role in roles).__next__()
         self.bot.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Default role": role_id}})
@@ -52,7 +52,7 @@ class AutoVerify(Cog):
                 check_user_db = self.bot.ROBLOX_DB.find_one({"Roblox ID": user.id})
                 if check_user_db is None:
 
-                    thumbnail = await self.bot.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
+                    thumbnail = await self.bot.roblox.thumbnails.get_user_avatar_thumbnails([user.id], size="720x720")
                     thumbnail_url = thumbnail[0].image_url if thumbnail[0].image_url is not None else Embed.Empty
 
                     user = await self.bot.roblox.get_user(user.id)

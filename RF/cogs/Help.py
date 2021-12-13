@@ -7,7 +7,7 @@ from nextcord.ext.menus import ListPageSource
 from nextcord.utils import get
 
 from ..bot import RF
-from . import CustomButtonMenuPages, del_user_msg
+from . import CustomButtonMenuPages, delUserMsg
 
 
 async def syntax(command) -> str:
@@ -103,7 +103,7 @@ class Help(Cog):
     @command(name="help", description='Show help information.', hidden=True)
     @has_permissions(administrator=True)
     async def help_command(self, ctx: Context, cmds: Optional[str] = None) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         COGS = sorted([self.bot.get_cog(cog) for cog in self.COGS if len(list(filter(lambda c: not c.hidden, self.bot.get_cog(cog).walk_commands())))], key=lambda C: C.qualified_name)
         if cmds is not None:
