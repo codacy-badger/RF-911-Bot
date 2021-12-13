@@ -17,5 +17,4 @@ jobs:
             -H 'Authorization: Bearer ${{env.apiKey}}' \
             -X POST \
             -d '{
-            "signal": "restart"
             }'
