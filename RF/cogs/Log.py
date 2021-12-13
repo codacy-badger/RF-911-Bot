@@ -65,7 +65,6 @@ class Log(Cog):
     
     def sniperUser(self, message: Message):
         filePath = f"./RF/cogs/MessageLog/{message.guild.id}-sniper.json"
-        
 
         def logMessage(message: Message):
             with open(filePath, "r+") as f:
@@ -80,7 +79,7 @@ class Log(Cog):
         if not exists(filePath):
             with open(filePath, "w") as f:
                 f.write("{}")
-                
+
             logMessage(message)
         else:
             logMessage(message)

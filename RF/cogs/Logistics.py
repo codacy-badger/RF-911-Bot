@@ -1,44 +1,12 @@
 from datetime import datetime, timedelta
 
-from nextcord import Embed
+from nextcord import Embed, Member, Webhook ,NotFound
 from nextcord.ext.commands import Cog, Context, command, has_role
 from pytz import timezone
 
 from ..bot import RF
-from . import del_user_msg
+from . import delUserMsg
 from .Bounty import Bounty
-
-# class FriendMenu(ListPageSource):
-#     def __init__(self, ctx, data, userName):
-#         self.ctx = ctx
-#         self.userName = userName
-#         self.bot.roblox = Client()
-
-#         super().__init__(data, per_page=18)
-
-
-#     async def write_page(self, menu, fields=[]):
-#         current_page = menu.current_page + 1
-#         max_page = round(len(self.entries) / self.per_page) + 1
-
-#         thumbnail = await self.bot.roblox.thumbnails.get_user_avatars([self.userName.id], size="720x720")
-#         thumbnail_url = (thumbnail[0].image_url if thumbnail[0].image_url is not None else Embed.Empty)
-
-#         embed = Embed(title=f"{self.userName.name.capitalize()}'s friends list", colour=0x2F3136,
-#                       description=f"User Name: {self.userName.name}\nDisplay Name: {self.userName.display_name}\nID: {self.userName.id}",)
-#         embed.set_footer(text=f"Page {current_page}/{max_page}.")
-#         embed.set_thumbnail(url=thumbnail_url)
-
-#         for name, value, inline in fields:
-#             embed.add_field(name=name, value=value, inline=True)
-
-#         return embed
-
-
-#     async def format_page(self, menu, entries):
-#         fields = [(f"Username: \n{name}",f"Display name: \n{displayName} \nID: {userID}",False,) for name, displayName, userID in entries]
-
-#         return await self.write_page(menu, fields)
 
 
 class Logistics(Cog):
@@ -46,39 +14,36 @@ class Logistics(Cog):
         self.bot = bot
 
 
-    async def get_url(self, userID) -> list:
+    async def getUrl(self, userID) -> list:
         URL = f"https://friends.roblox.com/v1/users/{userID}/friends?userSort=Alphabetical"
 
         async with self.bot.session.get(URL) as response:
             url = await response.json()
             data = url["data"]
-            friend_ids = [[data[i]["name"], data[i]["displayName"], data[i]["id"]] for i in range(len(data))]
+            friendsID = [[data[i]["name"], data[i]["displayName"], data[i]["id"]] for i in range(len(data))]
 
-        return friend_ids
+        return friendsID
 
 
     # @command(name="check-friend", aliases=["cf"], description="Check user's friend list.\nRequire `Logistics` Role")
     # @has_role("Logistics")
-    # async def check_friend_command(self, ctx: Context, userName: str) -> None:
-    #     await del_user_msg(ctx)
+    # async def check_friend_command(self, ctx: Context, filters: str, userName: str, loop: int = 3) -> None:
 
     #     username = await self.bot.roblox.get_user_by_username(userName)
     #     if username == None:
     #         await ctx.send("No user found with that username.")
     #     else:
-    #         friend_ids = await self.get_url(username.id)
+    #         friend_ids = await self.getUrl(username.id)
     #         if len(friend_ids):
-    #             menu = CustomButtonMenuPages(source=FriendMenu(ctx, friend_ids, username), timeout=120.0, ctx=ctx)
-    #             await menu.start(ctx)
-
+    #             pass
     #         else:
     #             await ctx.send("This user has no friends")
 
 
-    @command(name="host-bounty", aliases=["hb"], description="Host bounty without submission.\nRequire `Logistics` Role",)
+    @command(name="host-bounty", aliases=["hb"], description="Host bounty directly without submission.\nRequired `Logistics` Role",)
     @has_role("Logistics")
-    async def host_bounty_command(self, ctx: Context, userName: str, *, reason: str):
-        await del_user_msg(ctx)
+    async def hostBounty(self, ctx: Context, userName: str, *, reason: str) -> None:
+        await delUserMsg(ctx)
 
         user_name = await self.bot.roblox.get_user_by_username(userName)
         if user_name == None:
@@ -86,7 +51,7 @@ class Logistics(Cog):
         else:
             user = await self.bot.roblox.get_user(user_name.id)
 
-            thumbnail = await self.bot.roblox.thumbnails.get_user_avatars([user.id], size="720x720")
+            thumbnail = await self.bot.roblox.thumbnails.get_user_avatar_thumbnails([user.id], size="720x720")
             thumbnail_url = (thumbnail[0].image_url if thumbnail[0].image_url is not None else Embed.Empty)
             expired_time = datetime.now() + timedelta(days=7)
 
@@ -106,14 +71,32 @@ class Logistics(Cog):
 
             self.bot.scheduler.add_job(Bounty(self.bot).deleteBounty, id=f"{msg.id}-Bounty", args=[ctx.guild, msg.id], next_run_time=expired_time)
             self.bot.SCHEDULER.insert_one({"_id": f"{msg.id}-Bounty", "Guild ID": ctx.guild.id, "Guild": ctx.guild.name,
-                                                    "Expired": expired_time.strftime('%d-%m-%Y-%H-%M-%S'),})       
+                                                    "Expired": expired_time.strftime('%d-%m-%Y-%H-%M-%S'),})
+    
+    
+    @command(name="claim", description="Claim a bounty.\nRequired `Logistics` Role")
+    @has_role("Logistics")
+    async def claimBounty(self, ctx: Context, messageID: int, user: Member) -> None:
+        await delUserMsg(ctx)
+        
+        HITLIST = self.bot.GUILD_DB.find_one({"_id": ctx.guild.id})
+        webhook = HITLIST["Hitlist"]
+        ID, Token = webhook["ID"], webhook["Token"]
+
+        channel = Webhook.from_url(url=f"https://discord.com/api/webhooks/{ID}/{Token}", session=self.bot.session)
+
+        try:
+            message = await channel.fetch_message(messageID)
+            await message.edit(content=f"Bounty claimmed by {user.mention}. Authenticated by {ctx.author.mention}")
+        except NotFound:
+            await ctx.send("No bounty found with provided ID.", delete_after= 10)
 
 
     @Cog.listener()
-    async def on_ready(self):
+    async def on_ready(self) -> None:
         if not self.bot.ready:
             self.bot.cogs_ready.ready_up("Logistics")
 
 
-def setup(bot):
+def setup(bot) -> None:
     bot.add_cog(Logistics(bot))
