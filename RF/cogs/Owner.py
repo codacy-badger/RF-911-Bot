@@ -6,7 +6,7 @@ from nextcord.ext.commands import (Cog, CommandError, Context, DisabledCommand,
                                    command, is_owner)
 
 from ..bot import RF
-from . import del_user_msg
+from . import delUserMsg
 
 
 class ExtensionNotloaded(CommandError):
@@ -38,7 +38,7 @@ class Owner(Cog):
     @command(name="load", description='Load extensions.\n`Owner` only command', hidden=True)
     @is_owner()
     async def _load(self, ctx: Context, module: Optional[str]) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         try:
             self.bot.load_extension(f'RF.cogs.{module.capitalize()}')
@@ -50,7 +50,7 @@ class Owner(Cog):
     @command(name='unload', description='Unload extensions.\n`Owner` only command', hidden=True)
     @is_owner()
     async def _unload(self, ctx: Context, module: Optional[str]) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         try:
             self.bot.unload_extension(f'RF.cogs.{module.capitalize()}')
@@ -62,7 +62,7 @@ class Owner(Cog):
     @command(name='reload', description='Reload extensions.\n`Owner` only command', hidden=True)
     @is_owner()
     async def _reload(self, ctx: Context, module: Optional[str] = "all") -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         try:
             if "all" in module:
@@ -80,7 +80,7 @@ class Owner(Cog):
     @command(name='cogs', description = 'List all extensions.\n`Owner` only command', hidden=True)
     @is_owner()
     async def _list_all_extensions(self, ctx: Context) -> None:
-        await del_user_msg(ctx)
+        await delUserMsg(ctx)
 
         embed = Embed(title="List of extensions: ", colour= 0x2f3136, description="\n".join(self._COGS))
         await ctx.send(embed=embed)
