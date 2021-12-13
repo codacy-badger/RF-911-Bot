@@ -82,7 +82,7 @@ class CustomButtonMenuPages(ButtonMenuPages, inherit_buttons=False):
         self._disable_unavailable_buttons()
 
 
-async def del_user_msg(ctx):
+async def delUserMsg(ctx):
     delete_user_msg = await ctx.channel.fetch_message(ctx.message.id)
     await delete_user_msg.delete()
 
