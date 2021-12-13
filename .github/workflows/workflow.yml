@@ -16,5 +16,3 @@ jobs:
             -H 'Content-Type: application/json' \
             -H 'Authorization: Bearer ${{env.apiKey}}' \
             -X POST \
-            -d '{
-            }'
