@@ -9,6 +9,7 @@ beautifulsoup4==4.10.0
 better_profanity==0.7.0
 cchardet==2.1.7
 lxml==4.6.3
+msgpack==1.0.3
 nextcord-ext-menus==1.3.2
 nextcord[speed, voice]==2.0.0a3
 orjson==3.6.4
@@ -20,3 +21,4 @@ pytz==2021.3
 roblox==2.0.0
 typeshed_client==1.1.1
 uvloop==0.16.0
+ujson==4.3.0
