@@ -1,7 +1,11 @@
+from os import getenv
+
 from nextcord import ButtonStyle, Interaction, ui
 from nextcord.ext.commands import Cog, Context
 from nextcord.ext.menus import ButtonMenuPages, MenuPaginationButton
 from nextcord.ext.menus.utils import _cast_emoji
+from pymongo.mongo_client import MongoClient
+from RF.utils.Moderation import ResponseError
 
 from ..bot import RF
 from . import *
@@ -80,6 +84,21 @@ class CustomButtonMenuPages(ButtonMenuPages, inherit_buttons=False):
 
         # Disable buttons that are unavailable to be pressed at the start
         self._disable_unavailable_buttons()
+
+
+def isModerator(ctx: Context):
+    MONGO_CLIENT = MongoClient(getenv("DATABASE"))
+    DB = MONGO_CLIENT["RF911"]
+    GUILD_DB = DB["Guild"]
+    GUILD = GUILD_DB.find_one({"_id": ctx.guild.id})
+    try:
+        roleID = GUILD["Moderator Role"]
+    except KeyError:
+        raise ResponseError("No Moderator have been assigned.")
+
+    if roleID not in [role.id for role in ctx.author.roles] and not ctx.author.guild_permissions.administrator and ctx.guild.owner_id != ctx.author.id:
+        raise ResponseError("You're not moderator.")
+    return True
 
 
 async def delUserMsg(ctx):

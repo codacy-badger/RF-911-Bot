@@ -2,12 +2,12 @@ from pathlib import Path
 from typing import Optional
 
 from nextcord import Embed
-from nextcord.ext.commands import Cog, Context, command, has_permissions
+from nextcord.ext.commands import Cog, Command, Context, check, command
 from nextcord.ext.menus import ListPageSource
 from nextcord.utils import get
 
 from ..bot import RF
-from . import CustomButtonMenuPages, delUserMsg
+from . import CustomButtonMenuPages, delUserMsg, isModerator
 
 
 async def syntax(command) -> str:
@@ -83,14 +83,16 @@ class Help(Cog):
         await ctx.send(embed=embed)
 
 
-    async def cmd_help(self, ctx: Context, cmd: command) -> None:
+    async def cmd_help(self, ctx: Context, cmd: Command) -> None:
         aliases = f' | {" | ".join(cmd.aliases)}' if cmd.aliases != [] else ''
+        # checkRun = [await check(ctx) for check in cmd.checks][0]
+        # canRun = "Yes" if checkRun else "No"
 
         embed = Embed(title=f"Help with {cmd.qualified_name}", colour=0x2f3136)
         embed.set_author(name=ctx.author, icon_url=ctx.author.display_avatar)
         embed.add_field(name=f'{await self.get_guild_prefix(ctx)}{cmd.qualified_name} {aliases} {await syntax(cmd)}', 
                         value=cmd.description if cmd.description != '' else "This command have no description")
-
+        
         await ctx.send(embed=embed)
 
     
@@ -101,7 +103,7 @@ class Help(Cog):
 
 
     @command(name="help", description='Show help information.', hidden=True)
-    @has_permissions(administrator=True)
+    @check(isModerator)
     async def help_command(self, ctx: Context, cmds: Optional[str] = None) -> None:
         await delUserMsg(ctx)
 
