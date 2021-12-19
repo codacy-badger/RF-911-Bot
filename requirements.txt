@@ -8,7 +8,6 @@ asyncpraw==7.4.0
 beautifulsoup4==4.10.0
 better_profanity==0.7.0
 cchardet==2.1.7
-lxml==4.6.3
 msgpack==1.0.3
 lxml==4.6.5
 nextcord-ext-menus==1.3.2

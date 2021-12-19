@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 from itertools import repeat
 from typing import Optional
 
-from nextcord import Webhook, TextChannel
-from nextcord.ext.commands import (BucketType, Cog, Context, 
+from nextcord import Webhook, TextChannel, Role
+from nextcord.ext.commands import (BucketType, Cog, Context,
                                    bot_has_permissions, command, cooldown,
                                    has_permissions)
 from pytz import timezone
@@ -15,6 +15,15 @@ from . import delUserMsg
 class Admin(Cog):
     def __init__(self, bot: RF):
         self.bot = bot
+
+
+    @command(name="set-moderator-role", description="")
+    @has_permissions(administrator=True)
+    async def test(self, ctx: Context, role: Role):
+        await delUserMsg(ctx)
+
+        self.bot.GUILD_DB.update_one({"_id": ctx.guild.id}, {"$set": {"Moderator Role": role.id}})
+        await ctx.send(f"Moderator role have been set/updated to {role.mention}.", delete_after=5)
 
 
     @command(name="prefix", description="Change server prefix.\nRequire `Administrator` permissions",)
