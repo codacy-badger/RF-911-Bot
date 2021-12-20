@@ -1,0 +1,2 @@
+# RF-911-Bot
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2900e820a4204b4ea49a856ea6d38eed)](https://app.codacy.com/gh/iahacker123/RF-911-Bot?utm_source=github.com&utm_medium=referral&utm_content=iahacker123/RF-911-Bot&utm_campaign=Badge_Grade_Settings)
